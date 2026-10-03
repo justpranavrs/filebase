@@ -1,0 +1,35 @@
+# Copyright 2026 Pranav R S.
+# Use of this source code is governed by the MIT license that can be found in the LICENSE file.
+
+name: "filebase"
+
+services:
+  filebase:
+    build: .
+    image: ${APP_NAME:-filebase}
+    container_name: ${APP_NAME:-filebase}-server
+    ports:
+      - "${SERVER_PORT:-3000}:3000"
+    env_file:
+      - .env
+    volumes:
+      - filebase_data:/app/${DATA:-./.data}
+    restart: unless-stopped
+
+  backup:
+    build: ./backup
+    image: ${APP_NAME:-filebase}-backup
+    container_name: ${APP_NAME:-filebase}-backup
+    environment:
+      - DB_PATH=/var/lib/filebase/data/filebase.db
+      - DB_BACKUP_PATH=/var/lib/filebase/backups
+      - AGE_DAYS=7
+      - INTERVAL_SECONDS=3600
+      - TIMEOUT_MILLISECONDS=10000
+    volumes:
+      - filebase_data:/var/lib/filebase/data
+      - ${BACKUP_DATA_PATH:-./.data/backups}:/var/lib/filebase/backups
+    restart: unless-stopped
+
+volumes:
+  filebase_data:
