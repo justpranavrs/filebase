@@ -13,5 +13,8 @@ pub struct Health {
 
 // Handles the health check endpoint, returning a JSON response with a welcome message and status.
 pub async fn health_handler() -> Json<Health> {
-    Json(Health { message: "welcome to filebase!", status: "ok" })
+    Json(Health {
+        message: "welcome to filebase",
+        status: "ok",
+    })
 }

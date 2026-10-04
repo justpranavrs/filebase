@@ -5,8 +5,14 @@ FROM rust:1.94-alpine AS builder
 RUN apk add --no-cache musl-dev build-base
 WORKDIR /app
 
-COPY Cargo.toml Cargo.lock ./
+COPY Cargo.toml Cargo.lock askama.toml sqlx.toml ./
+
 COPY src ./src
+COPY migrations ./migrations
+COPY templates ./templates
+
+COPY .sqlx ./.sqlx
+ENV SQLX_OFFLINE=true
 
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/usr/local/cargo/git \

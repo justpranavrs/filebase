@@ -9,6 +9,7 @@ use serde::Deserialize;
 pub struct ServerConfig {
     pub host: String,
     pub port: u16,
+    pub base_path: String,
     pub timeout_seconds: u64,
 }
 
@@ -18,6 +19,7 @@ impl Default for ServerConfig {
         Self {
             host: "127.0.0.1".into(),
             port: 3000,
+            base_path: "/api".into(),
             timeout_seconds: 30,
         }
     }

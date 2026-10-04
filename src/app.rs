@@ -1,9 +1,13 @@
 // Copyright 2026 Pranav R S.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE file.
 
+mod error;
+mod files;
 mod health;
 
-use std::{io::Error, time::Duration};
+pub use error::Error;
+
+use std::{io, time::Duration};
 
 use axum::{
     Router,
@@ -11,6 +15,7 @@ use axum::{
     routing::get,
     serve,
 };
+use sqlx::SqlitePool;
 use tokio::signal;
 use tower::ServiceBuilder;
 use tower_http::{
@@ -23,14 +28,18 @@ use tower_http::{
 };
 use tracing::{Level, info};
 
-use crate::config::ServerConfig;
+use crate::{
+    config::ServerConfig,
+    queries::{FileDB, FolderDB},
+    service::FileService,
+};
 
 // Define a constant for the "x-request-id" header name
 const X_REQUEST_ID: HeaderName = HeaderName::from_static("x-request-id");
 
 // Starts the server with the given configuration and returns the bind address as a string.
-pub async fn start_server(cfg: &ServerConfig) -> Result<String, Error> {
-    let app = create_router(cfg);
+pub async fn start_server(cfg: &ServerConfig, pool: SqlitePool) -> io::Result<String> {
+    let app = create_router(cfg, pool);
     let bind_address = format!("{}:{}", cfg.host, cfg.port);
     let listener = tokio::net::TcpListener::bind(&bind_address).await?;
 
@@ -71,7 +80,7 @@ pub async fn shutdown_signal() {
 }
 
 // Creates a router with the specified server configuration, setting up various middleware layers for request handling.
-fn create_router(cfg: &ServerConfig) -> Router {
+fn create_router(cfg: &ServerConfig, pool: SqlitePool) -> Router {
     let layer = ServiceBuilder::new()
         .layer(SetRequestIdLayer::new(X_REQUEST_ID, MakeRequestUuid))
         .layer(
@@ -89,7 +98,14 @@ fn create_router(cfg: &ServerConfig) -> Router {
             Duration::from_secs(cfg.timeout_seconds),
         ));
 
+    let file_db = FileDB::new(pool.clone());
+    let folder_db = FolderDB::new(pool.clone());
+
+    let file_service = FileService::new(file_db, folder_db);
+    let file_router = files::new(file_service);
+
+    let app = Router::new().nest("/folders", file_router).layer(layer);
     Router::new()
         .route("/health", get(health::health_handler))
-        .layer(layer)
+        .nest(&cfg.base_path, app)
 }

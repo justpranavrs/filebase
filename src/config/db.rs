@@ -7,7 +7,7 @@ use serde::Deserialize;
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default)]
 pub struct DatabaseConfig {
-    pub path: String,
+    pub url: String,
     pub max_connections: u32,
     pub timeout_seconds: u64,
 }
@@ -16,7 +16,7 @@ pub struct DatabaseConfig {
 impl Default for DatabaseConfig {
     fn default() -> Self {
         Self {
-            path: "filebase.db".into(),
+            url: "sqlite://./.data/filebase.db".into(),
             max_connections: 10,
             timeout_seconds: 30,
         }

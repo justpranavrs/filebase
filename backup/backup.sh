@@ -25,6 +25,6 @@ while true; do
 
     # Clean up backup files older than AGE days.
     del_count=$(find "$OUT_DIR" -name 'filebase-*.db*' -mtime +"$AGE" -print -delete| wc -l)
-    echo "deleted $del_count backup files older than $AGE days"
+    echo "backup purge: deleted $del_count backup files older than $AGE days"
     sleep "$INTERVAL"
 done

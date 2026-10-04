@@ -5,16 +5,28 @@ name: "filebase"
 
 services:
   filebase:
-    build: .
     image: ${APP_NAME:-filebase}
     container_name: ${APP_NAME:-filebase}-server
     ports:
-      - "${SERVER_PORT:-3000}:3000"
+      - "${SERVER_PORT:-3000}:${SERVER_PORT:-3000}"
     env_file:
       - .env
     volumes:
-      - filebase_data:/app/${DATA:-./.data}
+      - db-data:/app/${DATA_DIR:-.data}
     restart: unless-stopped
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+
+  migrations:
+    build: .
+    image: ${APP_NAME:-filebase}
+    command: ["./filebase", "--migrate-only"]
+    container_name: ${APP_NAME:-filebase}-migrations
+    env_file:
+      - .env
+    volumes:
+      - db-data:/app/${DATA_DIR:-.data}
 
   backup:
     build: ./backup
@@ -27,9 +39,13 @@ services:
       - INTERVAL_SECONDS=3600
       - TIMEOUT_MILLISECONDS=10000
     volumes:
-      - filebase_data:/var/lib/filebase/data
-      - ${BACKUP_DATA_PATH:-./.data/backups}:/var/lib/filebase/backups
+      - db-data:/var/lib/filebase/data
+      - db-backups:/var/lib/filebase/backups
     restart: unless-stopped
 
 volumes:
-  filebase_data:
+  db-data:
+    name: ${APP_NAME:-filebase}-data
+  db-backups:
+    name: ${APP_NAME:-filebase}-backups
+    external: true

@@ -5,7 +5,7 @@ use sqlx::{
     SqlitePool,
     sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, SqliteSynchronous},
 };
-use std::str::FromStr;
+use std::{fs, str::FromStr};
 use std::time::Duration;
 
 use crate::config::DatabaseConfig;
@@ -20,14 +20,19 @@ pub async fn init(cfg: &DatabaseConfig) -> Result<SqlitePool, sqlx::Error> {
         .foreign_keys(true)
         .busy_timeout(Duration::from_secs(cfg.timeout_seconds));
 
-    Ok(SqlitePoolOptions::new()
+    // Create the database directory if it does not exist.
+    if let Some(dir) = opts.get_filename().parent() {
+        fs::create_dir_all(dir)?;
+    }
+
+    SqlitePoolOptions::new()
         .max_connections(cfg.max_connections)
         .acquire_timeout(Duration::from_secs(cfg.timeout_seconds))
         .connect_with(opts)
-        .await?)
+        .await
 }
 
 // Generates the Data Source Name (DSN) for the SQLite database based on the provided configuration.
 fn dsn(cfg: &DatabaseConfig) -> String {
-    format!("sqlite://{}?mode=rwc", cfg.path)
+    format!("sqlite://{}?mode=rwc", cfg.url)
 }
