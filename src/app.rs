@@ -104,8 +104,7 @@ fn create_router(cfg: &ServerConfig, pool: SqlitePool) -> Router {
     let file_service = FileService::new(file_db, folder_db);
     let file_router = files::new(file_service);
 
-    let app = Router::new().nest("/folders", file_router).layer(layer);
     Router::new()
         .route("/health", get(health::health_handler))
-        .nest(&cfg.base_path, app)
+        .nest("/folders", file_router).layer(layer)
 }

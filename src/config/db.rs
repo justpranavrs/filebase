@@ -16,7 +16,7 @@ pub struct DatabaseConfig {
 impl Default for DatabaseConfig {
     fn default() -> Self {
         Self {
-            url: "sqlite://./.data/filebase.db".into(),
+            url: "sqlite:/var/lib/filebase/data/filebase.db".into(),
             max_connections: 10,
             timeout_seconds: 30,
         }

@@ -1,4 +1,9 @@
+# Environment
 .env
 
-/.data
+# Build
 /target
+
+# Local
+/.backups
+/.data

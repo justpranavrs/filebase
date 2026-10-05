@@ -1,6 +1,6 @@
 # filebase
 
-An open-source, self-hosted document management system for organizing personal files and records.
+An open-source, self-hosted document management system for personal files and records.
 
 ---
 
@@ -26,21 +26,23 @@ config:
     curve: linear
 ---
 flowchart TB
-    B[Browser] -->|HTTP Request| A[Axum]
-    A -->|HTML Response| B
-    A -->|Data| T[Askama]
-    T -->|HTML Fragments| A
-    A -->|Query| D[SQLite]
-    M[Migrations] -->|Apply Schema| D
-    D -->|Get Snapshots| S[Backup Service]
-    S -->|Write Snapshots| F[Backup Files]
+    B[Browser / Client] -->|HTTP Request| N[Nginx Proxy]
+    N -->|Proxy Request| A[Axum Application]
+    N -->|Static Files| ST[Static Assets]
+    A -->|HTML Response| N
+    A -->|Template Data| T[Askama Templates]
+    T -->|Rendered HTML| A
+    A -->|Queries & Connection Pool| D[(SQLite Database)]
+    M[Migrations Runner] -->|Apply Schema| D
+    D -->|VACUUM INTO Snapshot| S[Backup Service]
+    S -->|Atomic Rotate & Purge| F[Backup Files]
 ```
 
-The server never changes the schema on startup. Migrations run as a separate step (`--migrate-only`) before the server starts.
+Database migrations are embedded directly into the binary and run automatically when Filebase boots.
 
 ---
 
-## Getting started
+## Getting Started
 
 ### Docker
 
@@ -50,86 +52,79 @@ cd filebase
 
 cp .env.example .env
 
-docker volume create filebase-backups
 docker compose up --build
 ```
 
-Open `http://localhost:3000`.
+Visit `http://localhost`.
 
-On every `docker compose up`, the `migrations` container applies pending migrations and exits. The `filebase` and `backup` services start only after it succeeds.
+On startup, Filebase automatically applies any pending database migrations before serving traffic.
 
-> **Note:** Migrations are embedded into the binary at build time. After adding or changing a migration, run `docker compose up --build`.
+> **Note:** Migrations are baked into the binary at build time. Whenever you add or edit migrations, rebuild the container with `docker compose up --build`.
 
 ### Local
 
 ```bash
-cargo install sqlx-cli --no-default-features --features sqlite,rustls,sqlx-toml
-
 git clone https://github.com/justpranavrs/filebase.git
 cd filebase
 
 cp .env.example .env
 
-cargo run -- --migrate-only   # creates the database directory and file, applies migrations
-cargo run                     # starts the server
+cargo run
 ```
 
-`sqlx-cli` is only needed for adding migrations and for generating offline query data.
+Migrations run automatically on boot. To create new migration files or prepare offline query cache data, install `sqlx-cli`:
+
+```bash
+cargo install sqlx-cli --no-default-features --features sqlite,rustls,sqlx-toml
+```
 
 ---
 
 ## Configuration
 
-The app is configured with these variables:
+Filebase is configured via environment variables (loaded from `.env`):
 
 | Variable | Description | Default (`.env`) |
 |---|---|---|
-| `APP_NAME` | Application name, used for image and container names in `compose.yml` | `filebase` |
-| `TZ` | Time zone used by the containers | `Asia/Kolkata` |
-| `LOG_LEVEL` | Log verbosity | `debug` |
-| `SERVER_HOST` | Address the server binds to | `127.0.0.1` |
-| `SERVER_PORT` | Port the server listens on (host port in Docker) | `3000` |
-| `SERVER_BASE_PATH` | Base path of the server | `/api` |
-| `SERVER_TIMEOUT_SECONDS` | Request timeout in seconds | `30` |
-| `DATABASE_URL` | SQLite database connection string | `sqlite:.data/filebase.db` |
-| `DATABASE_MAX_CONNECTIONS` | Maximum database connections in the pool | `10` |
-| `DATABASE_TIMEOUT_SECONDS` | Database timeout in seconds | `15` |
+| `APP_NAME` | Project name, used for container and image naming | `filebase` |
+| `TZ` | Time zone used by containers | `Asia/Kolkata` |
+| `DATA_DIR` | Directory storing the active SQLite database | `./.data` |
+| `DATABASE_BACKUP` | Directory where database snapshots are kept | `./.backups` |
+| `STORAGE_DIR` | Directory where uploaded files are stored | `./storage` |
+| `REVERSE_PROXY_PORT` | Published host port for the bundled Nginx proxy | `80` |
+| `LOG_LEVEL` | Logging verbosity (`debug`, `info`, `warn`, `error`) | `debug` |
+| `SERVER_HOST` | Address Filebase binds to | `filebase` |
+| `SERVER_PORT` | Port Filebase listens on | `3000` |
+| `SERVER_TIMEOUT_SECONDS` | HTTP request timeout in seconds | `30` |
+| `DATABASE_URL` | SQLite connection string | `sqlite:./.data/filebase.db` |
+| `DATABASE_MAX_CONNECTIONS` | Maximum connection pool size | `10` |
+| `DATABASE_TIMEOUT_SECONDS` | Database lock acquire timeout in seconds | `15` |
 
 Docker notes:
-
-- `compose.yml` overrides `SERVER_HOST` with `0.0.0.0`. A server bound to `127.0.0.1` inside a container is unreachable through a published port.
-- `DATABASE_URL` is relative, so it resolves against the working directory (`/app` in the container). The `db-data` volume is mounted at `/app/.data`, so the database must live inside `.data`. If you change the directory in `DATABASE_URL`, change the volume mount to match.
-- The URL must include a directory. A bare filename like `sqlite:filebase.db` would create the database outside the volume and lose it when the container is removed.
+- `compose.yml` mounts `${DATA_DIR:-./.data}`, `${DATABASE_BACKUP:-./backups}`, and `${STORAGE_DIR:-./storage}` into their respective container paths.
+- The directory in `DATABASE_URL` is created automatically on startup if it doesn't already exist.
 
 ---
 
 ## Database Migrations
 
-Migrations run with the app binary, not `sqlx-cli`:
+Migrations are embedded into the binary and run automatically whenever the application starts.
 
-```bash
-# Local
-cargo run -- --migrate-only
-
-# Docker
-docker compose run --rm migrations
-```
-
-`sqlx-cli` is used only to create new migration files. Ensure `DATABASE_URL` is set in your `.env` first.
+`sqlx-cli` is only needed when creating new migrations or refreshing offline query metadata. Ensure `DATABASE_URL` is set in your `.env` before running SQLx commands.
 
 ### Adding Migrations
 
-To create a new migration:
+Generate a new migration file:
 
 ```bash
-sqlx migrate add <filename>
+sqlx migrate add <migration_name>
 ```
 
-This creates a new migration file inside the `migrations/` directory. Do not edit a migration after it has been applied; add a new one instead.
+This creates a new timestamped SQL file in `migrations/`. Always add a new migration instead of modifying an existing one that has already been applied.
 
-### Offline query data
+### Offline Query Metadata
 
-The Docker build runs with `SQLX_OFFLINE=true`, so the committed `.sqlx/` directory must be current. After changing any `query!` macro or the schema:
+Docker builds with `SQLX_OFFLINE=true`. If you modify any SQL queries or table schemas, refresh the `.sqlx/` cache and commit it:
 
 ```bash
 cargo sqlx prepare
@@ -137,54 +132,84 @@ cargo sqlx prepare
 
 ---
 
-## Backups
+## Nginx
 
-A dedicated backup service runs next to the app. It uses `alpine:3.24` as its base image and runs a shell script in a loop. On every cycle it:
+Reverse proxy configs are provided in [`nginx/`](nginx/):
 
-1. Creates a consistent snapshot of the live database, written to a temporary file first and then renamed, so a half-written backup is never left behind.
-2. Names the snapshot `filebase-<date>-<time>.db`.
-3. Deletes backup files older than the configured age.
+- [`nginx/filebase.conf`](nginx/filebase.conf): Configures caching for `/static/`, protects `/storage/` via `internal;`, and reverse proxies requests to Filebase with client IP headers.
+- [`nginx/default.conf`](nginx/default.conf): Defines the `upstream filebase` block, listens on port `80`, and includes `filebase.conf`.
 
-The backup service is configured in `compose.yml` with these variables:
+---
 
-| Variable | Description | Default |
-|---|---|---|
-| `DB_PATH` | SQLite database to back up | `/var/lib/filebase/data/filebase.db` |
-| `DB_BACKUP_PATH` | Folder where snapshots are written | `/var/lib/filebase/backups` |
-| `AGE_DAYS` | Delete backups older than this many days | `7` |
-| `INTERVAL_SECONDS` | Time between backups | `3600` |
-| `TIMEOUT_MILLISECONDS` | SQLite busy timeout while taking a snapshot | `10000` |
+## Production Notes
 
-Snapshots are stored in the external `filebase-backups` Docker volume, which is separate from the database volume. Both volumes live on the same host disk, so copy backups elsewhere for real protection against disk failure.
+Choose the setup that fits your server infrastructure:
 
-List snapshots:
+### Option A: Single Centralized Reverse Proxy
 
-```bash
-docker exec filebase-backup ls -la /var/lib/filebase/backups
-```
+Use this if you want your host's Nginx to serve static files and protect storage directly without running the extra Nginx container in Docker.
 
-Copy snapshots to the host:
+1. Do not start the `nginx` container (run `docker compose up -d filebase backups` or remove the `nginx` service from `compose.yml`).
 
-```bash
-docker cp filebase-backup:/var/lib/filebase/backups ./backups-copy
-```
+2. Expose Filebase's port by uncommenting `ports:` under `filebase` in `compose.yml`:
+   ```yaml
+   ports:
+     - "3000:${SERVER_PORT:-3000}"
+   ```
 
-### Restore a snapshot
+3. Copy the configuration files to your host:
+   ```bash
+   sudo cp nginx/filebase.conf /etc/nginx/snippets/filebase.conf
+   sudo cp nginx/default.conf /etc/nginx/conf.d/filebase.conf
+   ```
 
-Stop the server first so the live database is not overwritten while in use:
+4. Update the host files:
+   - In `/etc/nginx/conf.d/filebase.conf`:
+     - Point the upstream to the host port:
+       ```nginx
+       upstream filebase {
+           server 127.0.0.1:3000;
+       }
+       ```
+     - Change `server_name localhost;` to `server_name <domain>;`.
+   - In `/etc/nginx/snippets/filebase.conf`:
+     - Confirm `/storage/` points to your `STORAGE_DIR` (e.g., `/srv/filebase/storage/`).
+     - Confirm `/static/` points to your static assets (e.g., `/srv/filebase/static/`).
 
-```bash
-docker compose stop filebase
+5. Issue an SSL certificate:
+   ```bash
+   sudo certbot --nginx -d <domain>
+   ```
 
-docker exec filebase-backup sh -c '
-  cp /var/lib/filebase/backups/filebase-<date>-<time>.db /var/lib/filebase/data/filebase.db &&
-  rm -f /var/lib/filebase/data/filebase.db-wal /var/lib/filebase/data/filebase.db-shm
-'
+### Option B: Chained Reverse Proxy
 
-docker compose start filebase
-```
+Use this if you already run a centralized host proxy (such as Nginx, Caddy, or Traefik) and want the bundled Nginx container to continue handling static assets and internal storage rules. **No files need to be copied to your host.**
 
-The `-wal` and `-shm` files are removed so SQLite does not replay stale write-ahead log data onto the restored snapshot.
+1. In `.env`, set `REVERSE_PROXY_PORT` to an unused host port (e.g., `8080`):
+   ```env
+   REVERSE_PROXY_PORT="8080"
+   ```
+
+2. In your host Nginx configuration (e.g. `/etc/nginx/conf.d/filebase.conf`), proxy traffic to that port:
+   ```nginx
+   server {
+       listen 80;
+       server_name <domain>;
+
+       location / {
+           proxy_pass http://127.0.0.1:8080;
+           proxy_set_header Host $host;
+           proxy_set_header X-Real-IP $remote_addr;
+           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+           proxy_set_header X-Forwarded-Proto $scheme;
+       }
+   }
+   ```
+
+3. Issue an SSL certificate:
+   ```bash
+   sudo certbot --nginx -d <domain>
+   ```
 
 ---
 

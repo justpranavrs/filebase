@@ -5,47 +5,43 @@ name: "filebase"
 
 services:
   filebase:
-    image: ${APP_NAME:-filebase}
-    container_name: ${APP_NAME:-filebase}-server
-    ports:
-      - "${SERVER_PORT:-3000}:${SERVER_PORT:-3000}"
-    env_file:
-      - .env
-    volumes:
-      - db-data:/app/${DATA_DIR:-.data}
-    restart: unless-stopped
-    depends_on:
-      migrations:
-        condition: service_completed_successfully
-
-  migrations:
     build: .
     image: ${APP_NAME:-filebase}
-    command: ["./filebase", "--migrate-only"]
-    container_name: ${APP_NAME:-filebase}-migrations
+    container_name: ${APP_NAME:-filebase}-server
+    # ports:
+    #   - "3000:${SERVER_PORT:-3000}"
+    environment:
+      - DATA_DIR=/var/lib/filebase/data
+      - STORAGE_DIR=/var/lib/filebase/storage
     env_file:
       - .env
     volumes:
-      - db-data:/app/${DATA_DIR:-.data}
+      - ${DATA_DIR:-./.data}:/var/lib/filebase/data
+      - ${STORAGE_DIR:-./storage}:/var/lib/filebase/storage
+    restart: unless-stopped
 
-  backup:
+  backups:
     build: ./backup
     image: ${APP_NAME:-filebase}-backup
     container_name: ${APP_NAME:-filebase}-backup
     environment:
-      - DB_PATH=/var/lib/filebase/data/filebase.db
-      - DB_BACKUP_PATH=/var/lib/filebase/backups
       - AGE_DAYS=7
       - INTERVAL_SECONDS=3600
       - TIMEOUT_MILLISECONDS=10000
     volumes:
-      - db-data:/var/lib/filebase/data
-      - db-backups:/var/lib/filebase/backups
+      - ${DATA_DIR:-./.data}:/var/lib/filebase/data
+      - ${DATABASE_BACKUP:-./.backups}:/var/lib/filebase/backups
     restart: unless-stopped
 
-volumes:
-  db-data:
-    name: ${APP_NAME:-filebase}-data
-  db-backups:
-    name: ${APP_NAME:-filebase}-backups
-    external: true
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    image: ${APP_NAME:-filebase}-nginx
+    container_name: ${APP_NAME:-filebase}-nginx
+    ports:
+      - "${REVERSE_PROXY_PORT:-80}:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ${STORAGE_DIR:-./storage}:/var/lib/filebase/storage:ro
+    restart: unless-stopped

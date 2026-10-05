@@ -19,14 +19,12 @@ pub fn new(svc: FileService) -> Router {
 #[derive(Template)]
 #[template(path = "folder.html")]
 struct FolderTemplate {
-    name: String,
     items: FolderItems,
 }
 
 pub async fn folder_items(State(svc): State<FileService>, Path(folder_id): Path<i64>) -> Result<Html<String>, Error> {
     let items = svc.folder_items(folder_id).await?;
     let folder = FolderTemplate{
-        name: "filebase-root".into(),
         items,
     };
     Ok(Html(folder.render()?))

@@ -21,7 +21,7 @@ impl FolderDB {
         query_as!(
             Folder,
             r#"
-                SELECT * FROM folders 
+                SELECT * FROM folders
                 WHERE parent_id IS ?
             "#,
             parent_id

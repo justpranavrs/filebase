@@ -6,8 +6,8 @@
 set -eu
 
 # Backup Configuration Variables
-DB="${DB_PATH:-'/var/lib/filebase/data/filebase.db'}"
-OUT_DIR="${DB_BACKUP_PATH:-'/var/lib/filebase/backups'}"
+DB="/var/lib/filebase/data/filebase.db"
+OUT_DIR="/var/lib/filebase/backups"
 AGE="${AGE_DAYS:-7}"
 INTERVAL="${INTERVAL_SECONDS:-21600}"
 TIMEOUT="${TIMEOUT_MILLISECONDS:-10000}"

@@ -4,5 +4,6 @@
 FROM alpine:3.24
 RUN apk add --no-cache sqlite
 
+# Copy and run the backup script.
 COPY --chmod=755 backup.sh /backup.sh
 CMD ["/backup.sh"]

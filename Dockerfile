@@ -1,10 +1,12 @@
 # Copyright 2026 Pranav R S.
 # Use of this source code is governed by the MIT license that can be found in the LICENSE file.
 
+# The Builder stage that builds the rust binary.
 FROM rust:1.94-alpine AS builder
 RUN apk add --no-cache musl-dev build-base
 WORKDIR /app
 
+# Copy the configuration files.
 COPY Cargo.toml Cargo.lock askama.toml sqlx.toml ./
 
 COPY src ./src
@@ -20,6 +22,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
     cargo build --release && \
     cp target/release/filebase .
 
+# The runtime stage which just executes the binary.
 FROM alpine:3.24 AS runtime
 WORKDIR /app
 COPY --from=builder /app/filebase .

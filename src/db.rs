@@ -5,8 +5,9 @@ use sqlx::{
     SqlitePool,
     sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, SqliteSynchronous},
 };
-use std::{fs, str::FromStr};
 use std::time::Duration;
+use std::{fs, str::FromStr};
+use tracing::info;
 
 use crate::config::DatabaseConfig;
 
@@ -25,11 +26,20 @@ pub async fn init(cfg: &DatabaseConfig) -> Result<SqlitePool, sqlx::Error> {
         fs::create_dir_all(dir)?;
     }
 
-    SqlitePoolOptions::new()
+    let pool = SqlitePoolOptions::new()
         .max_connections(cfg.max_connections)
         .acquire_timeout(Duration::from_secs(cfg.timeout_seconds))
         .connect_with(opts)
+        .await?;
+
+    // Do the database migrations
+    info!("initiating database migrations");
+    sqlx::migrate!("./migrations")
+        .run(&pool)
         .await
+        .expect("failed to run database migrations");
+    info!("database migrations completed");
+    Ok(pool)
 }
 
 // Generates the Data Source Name (DSN) for the SQLite database based on the provided configuration.

@@ -12,12 +12,14 @@ migrations-dir = "migrations"
 migration-type = "simple"
 migration-versioning = "sequential"
 
+# Table 'files'
 [macros.table-overrides.'files']
 'object_key' = "uuid::Uuid"
 'created_at' = "chrono::NaiveDateTime"
 'updated_at' = "chrono::NaiveDateTime"
 'deleted_at' = "chrono::NaiveDateTime"
 
+# Table 'folders'
 [macros.table-overrides.'folders']
 'created_at' = "chrono::NaiveDateTime"
 'updated_at' = "chrono::NaiveDateTime"
