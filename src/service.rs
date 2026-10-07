@@ -5,4 +5,4 @@ mod error;
 mod files;
 
 pub use error::Error;
-pub use files::{FileService, FolderItems};
+pub use files::{Directory, FileService, FolderItems};

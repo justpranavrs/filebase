@@ -12,8 +12,8 @@ An open-source, self-hosted document management system for personal files and re
 - [Axum](https://github.com/tokio-rs/axum)
 - [Askama](https://github.com/askama-rs/askama)
 - [HTMX](https://htmx.org)
-- [Pico.css](https://picocss.com)
 - [SQLite](https://www.sqlite.org)
+- [Lightning CSS](https://lightningcss.dev)
 
 ---
 
@@ -46,14 +46,24 @@ Database migrations are embedded directly into the binary and run automatically 
 
 ### Docker
 
+Running Docker Compose requires `lightningcss` to bundle CSS assets before building the containers:
+
 ```bash
-git clone https://github.com/justpranavrs/filebase.git
-cd filebase
-
-cp .env.example .env
-
-docker compose up --build
+npm install -g lightningcss
 ```
+
+1. Clone and configure:
+   ```bash
+   git clone https://github.com/justpranavrs/filebase.git
+   cd filebase
+
+   cp .env.example .env
+   ```
+
+2. Start the services (or run `make docker-up`):
+   ```bash
+   docker compose up --build
+   ```
 
 Visit `http://localhost`.
 
@@ -154,7 +164,7 @@ Use this if you want your host's Nginx to serve static files and protect storage
 2. Expose Filebase's port by uncommenting `ports:` under `filebase` in `compose.yml`:
    ```yaml
    ports:
-     - "3000:${SERVER_PORT:-3000}"
+     - "${SERVER_PORT:-3000}:${SERVER_PORT:-3000}"
    ```
 
 3. Copy the configuration files to your host:

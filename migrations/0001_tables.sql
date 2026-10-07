@@ -8,8 +8,7 @@ CREATE TABLE IF NOT EXISTS folders (
     parent_id       INTEGER REFERENCES folders(id) ON DELETE CASCADE,
     name            TEXT NOT NULL,
     created_at      TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at      TEXT NOT NULL DEFAULT (datetime('now')),
-    deleted_at      TEXT
+    updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 -- Table: files
@@ -23,18 +22,15 @@ CREATE TABLE IF NOT EXISTS files (
     content_type    TEXT,
     checksum        TEXT,
     created_at      TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at      TEXT NOT NULL DEFAULT (datetime('now')),
-    deleted_at      TEXT 
+    updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 -- An Index on the checksum field of the files table.
 CREATE INDEX IF NOT EXISTS files_checksum_idx ON files(checksum);
 
 -- Foreign Key Indexes and Name Collisions in the Same Folders.
-CREATE UNIQUE INDEX IF NOT EXISTS files_folder_id_name_uq ON files(folder_id, name)
-    WHERE deleted_at IS NULL;
-CREATE UNIQUE INDEX IF NOT EXISTS folders_parent_id_name_uq ON folders(parent_id, name)
-    WHERE deleted_at IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS files_folder_id_name_uq ON files(folder_id, name);
+CREATE UNIQUE INDEX IF NOT EXISTS folders_parent_id_name_uq ON folders(parent_id, name);
 
 -- Create a Root Folder for the Filesystem
-INSERT INTO folders (id, name) VALUES (1, 'filebase-root');
+INSERT INTO folders (id, name) VALUES (1, 'root');

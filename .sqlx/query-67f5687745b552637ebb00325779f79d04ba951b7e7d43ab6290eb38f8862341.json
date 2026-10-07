@@ -101,17 +101,6 @@
             "name": "updated_at"
           }
         }
-      },
-      {
-        "name": "deleted_at",
-        "ordinal": 9,
-        "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "files",
-            "name": "deleted_at"
-          }
-        }
       }
     ],
     "parameters": {
@@ -126,8 +115,7 @@
       true,
       true,
       false,
-      false,
-      true
+      false
     ]
   },
   "hash": "67f5687745b552637ebb00325779f79d04ba951b7e7d43ab6290eb38f8862341"

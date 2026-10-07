@@ -9,11 +9,15 @@ pub enum Error {
 }
 
 impl From<crate::service::Error> for Error {
-    fn from(e: crate::service::Error) -> Self { Self::Service(e) }
+    fn from(e: crate::service::Error) -> Self {
+        Self::Service(e)
+    }
 }
 
 impl From<askama::Error> for Error {
-    fn from(e: askama::Error) -> Self { Self::Render(e) }
+    fn from(e: askama::Error) -> Self {
+        Self::Render(e)
+    }
 }
 
 impl IntoResponse for Error {
@@ -23,8 +27,6 @@ impl IntoResponse for Error {
 
         let (status, msg) = match &self {
             Self::Service(E::NotFound) => (StatusCode::NOT_FOUND, "Not found"),
-            Self::Service(E::Conflict) => (StatusCode::CONFLICT, "Already exists"),
-            Self::Service(E::Forbidden) => (StatusCode::FORBIDDEN, "Not allowed"),
             Self::Service(_) | Self::Render(_) => {
                 tracing::error!("request failed");
                 (StatusCode::INTERNAL_SERVER_ERROR, "Something went wrong")

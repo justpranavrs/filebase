@@ -5,12 +5,21 @@ use super::Error;
 
 use tracing::instrument;
 
-use crate::{models::{File, Folder}, queries::{FileDB, FolderDB}};
+use crate::{
+    models::{File, Folder, NewFolder},
+    queries::{FileDB, FolderDB},
+};
 
-// Shows the Items inside of a Directory.
+// Shows the items inside of a Directory.
 pub struct FolderItems {
-    folders: Vec<Folder>,
-    files: Vec<File>,
+    pub folders: Vec<Folder>,
+    pub files: Vec<File>,
+}
+
+// Contains the parent folder and items of that folder.
+pub struct Directory {
+    pub parent: Folder,
+    pub items: FolderItems,
 }
 
 #[derive(Clone)]
@@ -25,9 +34,23 @@ impl FileService {
     }
 
     #[instrument(skip(self))]
-    pub async fn folder_items(&self, folder_id: i64) -> Result<FolderItems, Error> {
-        let files = self.db.files(folder_id).await?;
-        let folders = self.folder_db.folders(folder_id).await?;
-        Ok(FolderItems { folders, files })
+    pub async fn create_folder(&self, folder: NewFolder) -> Result<Folder, Error> {
+        Ok(self.folder_db.create_folder(folder).await?)
+    }
+
+    #[instrument(skip(self))]
+    pub async fn folder_items(&self, folder_id: i64) -> Result<Directory, Error> {
+        let parent = self
+            .folder_db
+            .folder_by_id(folder_id)
+            .await?
+            .ok_or(Error::NotFound)?;
+
+        let files = self.db.files_by_folder_id(folder_id).await?;
+        let folders = self.folder_db.folders_by_folder_id(folder_id).await?;
+        Ok(Directory {
+            parent,
+            items: FolderItems { folders, files },
+        })
     }
 }

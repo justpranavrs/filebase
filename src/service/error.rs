@@ -6,12 +6,6 @@ pub enum Error {
     #[error("not found")]
     NotFound,
 
-    #[error("already exists")]
-    Conflict,
-
-    #[error("forbidden")]
-    Forbidden,
-
     #[error("database error")]
     Database(#[from] sqlx::Error),
 }

@@ -1,0 +1,26 @@
+<div>
+  <div>
+    <h3>{{ parent.name }}</h3>
+    <form 
+      hx-post="/folders" 
+      hx-target="#folder-workspace" 
+      hx-swap="beforeend" 
+      hx-vals='{"parent_id": "{{ parent.id }}"}'
+    >
+        <input type="text" name="name" placeholder="New Folder" required />
+        <button type="submit">Create Folder</button>
+    </form>
+  </div>
+  <ul id="folder-workspace">
+    {% for folder in items.folders %} 
+      {% include "folder_item.html" %} 
+    {% endfor %} 
+    
+    {% for file in items.files %}
+      <li>
+        <span>{{ file.name }}</span>
+        <a href="/files/{{ file.object_key }}/download">Download</a>
+      </li>
+    {% endfor %}
+  </ul>
+</div>

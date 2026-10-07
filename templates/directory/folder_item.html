@@ -1,0 +1,10 @@
+<li class="folder-item">
+  <a
+    hx-get="/folders/{{ folder.id }}"
+    hx-target="#app"
+    hx-swap="innerHTML"
+    hx-push-url="true"
+  >
+    {{ folder.name }}
+  </a>
+</li>

@@ -57,17 +57,6 @@
             "name": "updated_at"
           }
         }
-      },
-      {
-        "name": "deleted_at",
-        "ordinal": 5,
-        "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "folders",
-            "name": "deleted_at"
-          }
-        }
       }
     ],
     "parameters": {
@@ -78,8 +67,7 @@
       true,
       false,
       false,
-      false,
-      true
+      false
     ]
   },
   "hash": "abded89023fd13897474ee1ed5d5a6bb4e865d49cd3e9c6b1b33a1bce478628f"

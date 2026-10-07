@@ -17,7 +17,7 @@ impl FileDB {
     }
 
     #[instrument(skip(self), err)]
-    pub async fn files(&self, folder_id: i64) -> sqlx::Result<Vec<File>> {
+    pub async fn files_by_folder_id(&self, folder_id: i64) -> sqlx::Result<Vec<File>> {
         query_as!(
             File,
             r#"

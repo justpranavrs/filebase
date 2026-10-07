@@ -9,12 +9,9 @@ services:
     image: ${APP_NAME:-filebase}
     container_name: ${APP_NAME:-filebase}-server
     # ports:
-    #   - "3000:${SERVER_PORT:-3000}"
-    environment:
-      - DATA_DIR=/var/lib/filebase/data
-      - STORAGE_DIR=/var/lib/filebase/storage
+    #   - "${SERVER_PORT:-3000}:${SERVER_PORT:-3000}"
     env_file:
-      - .env
+      - .env.docker
     volumes:
       - ${DATA_DIR:-./.data}:/var/lib/filebase/data
       - ${STORAGE_DIR:-./storage}:/var/lib/filebase/storage

@@ -16,7 +16,6 @@ pub struct File {
     pub checksum: Option<String>,
     pub created_at: chrono::NaiveDateTime,
     pub updated_at: chrono::NaiveDateTime,
-    pub deleted_at: Option<chrono::NaiveDateTime>,
 }
 
 // Metadata for creating a new file in the database.

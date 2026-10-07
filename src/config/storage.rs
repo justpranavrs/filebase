@@ -14,7 +14,7 @@ pub struct StorageConfig {
 impl Default for StorageConfig {
     fn default() -> Self {
         Self {
-            dir: "/var/lib/filebase/storage".into()
+            dir: "/var/lib/filebase/storage".into(),
         }
     }
 }

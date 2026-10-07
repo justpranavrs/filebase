@@ -4,8 +4,10 @@
 mod error;
 mod files;
 mod health;
+mod index;
 
 pub use error::Error;
+pub use index::render;
 
 use std::{io, time::Duration};
 
@@ -105,6 +107,8 @@ fn create_router(cfg: &ServerConfig, pool: SqlitePool) -> Router {
     let file_router = files::new(file_service);
 
     Router::new()
+        .route("/", get(index::index))
         .route("/health", get(health::health_handler))
-        .nest("/folders", file_router).layer(layer)
+        .nest("/folders", file_router)
+        .layer(layer)
 }

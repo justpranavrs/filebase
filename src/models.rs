@@ -4,5 +4,5 @@
 mod files;
 mod folders;
 
-pub use files::{File};
-pub use folders::{Folder};
+pub use files::File;
+pub use folders::{Folder, NewFolder, ROOT_FOLDER_ID};
