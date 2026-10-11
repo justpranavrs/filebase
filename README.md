@@ -6,7 +6,13 @@ An open-source, self-hosted document management system for personal files and re
 
 ## Introduction
 
-Filebase is a self-hosted document management system built for storing personal records, certificates, and important files. It manages document lifecycles with custom expiry alerts delivered to services like WhatsApp and Telegram before critical records expire. It runs with zero cloud dependencies, using SQLite for structured metadata and local disk storage for files.
+<p>
+  <img src="static/favicon.svg" width="64" height="64" alt="Filebase">
+</p>
+
+Filebase is an open-source, self-hosted document management system built for storing personal records, certificates, and files locally. It operates with zero cloud dependencies, using SQLite for structured metadata and local disk storage for document files.
+
+The web interface is server-rendered using Askama templates and HTMX, providing fast in-page updates without client-side single-page framework overhead.
 
 ---
 
@@ -28,10 +34,10 @@ Filebase is a self-hosted document management system built for storing personal 
 
 Filebase runs as a high-performance Rust web application paired with an automated backup worker, backed by SQLite and local disk storage:
 
-- **Axum**: Rust application server directly serving static assets, managing file uploads and downloads, handling folder operations, and rendering server-side templates with Askama.
-- **SQLite**: Embedded database storing folder structures, file metadata, and checksums.
-- **Disk Storage**: Local directory holding uploaded files, stored by UUID object key.
-- **Backup Service**: Companion container that takes periodic SQLite snapshots using `.backup` without locking active reads or writes.
+- **Axum**: Application server handling file operations, folder navigation, static asset delivery, and template rendering.
+- **SQLite**: Embedded database storing folder structures, document metadata, and SHA-256 checksums in WAL mode.
+- **Disk Storage**: Local filesystem directory storing uploaded documents by UUID object key.
+- **Backup Companion**: Companion container that creates periodic non-blocking SQLite snapshots using `VACUUM INTO` and purges older archives based on retention limits.
 
 ```mermaid
 ---
@@ -55,11 +61,11 @@ flowchart TD
 
 ### Checksum Verification and Caching
 
-Files are hashed with SHA-256 during upload and stored with their metadata. When a browser requests a previously downloaded file, Filebase compares the stored checksum with the incoming `If-None-Match` header. If they match, it returns an empty `304 Not Modified`, saving disk reads and network bandwidth.
+Files are hashed with SHA-256 upon upload. Stored checksums serve as ETags on subsequent requests: when a browser sends an `If-None-Match` header matching the checksum, Filebase returns an empty `304 Not Modified`, avoiding redundant disk reads and data transfers.
 
 ### Fast Server Rendering and Dynamic UI
 
-HTML templates compile directly into native Rust code with Askama at build time, eliminating runtime template parsing. On the frontend, HTMX swaps updated HTML fragments directly into the page during uploads, renames, and folder navigation, providing a responsive experience without a heavy single-page application framework.
+Templates compile directly into native Rust code with Askama at build time, eliminating runtime template parsing. HTMX swaps updated HTML fragments directly into the DOM during uploads, renames, and folder navigation, providing fast in-page updates without client-side single-page framework overhead.
 
 ---
 
@@ -81,16 +87,19 @@ HTML templates compile directly into native Rust code with Askama at build time,
 
 ### Quick Start
 
-Run Filebase immediately using the official pre-built Docker image:
+Run Filebase using the official pre-built Docker image:
 
 ```bash
+mkdir -p data storage
+
 docker run -d \
   --name filebase \
   -p 3000:3000 \
+  --user "$(id -u):$(id -g)" \
   -v ./data:/var/lib/filebase/data \
   -v ./storage:/var/lib/filebase/storage \
   --restart unless-stopped \
-  justpranavrs/filebase:latest
+  justpranavrs/filebase:0.1.0-alpha
 ```
 
 Open `http://localhost:3000` in your browser. Database migrations run automatically on startup.
@@ -123,7 +132,7 @@ Open `http://localhost:3000` in your browser. Database migrations run automatica
 
 Database migrations run automatically on startup.
 
-> **Note:** Migrations are compiled into the binary. Whenever you add or edit migrations, rebuild the container with `docker compose up --build`.
+> **Note:** Migrations are compiled into the binary. When adding or editing migrations, rebuild the container with `docker compose up --build`.
 
 ### Vulnerability Scanning
 
@@ -148,12 +157,13 @@ This runs quickview and recommendations, filters for fixable Critical and High C
    ```
 
 2. Build stylesheets and start the server:
+
    ```bash
    make css
    cargo run
    ```
 
-Database migrations run automatically on boot. To create new migration files or refresh offline query metadata, install `sqlx-cli`:
+Database migrations run automatically on startup. To create new migration files or refresh offline query metadata, install `sqlx-cli`:
 
 ```bash
 cargo install sqlx-cli --no-default-features --features sqlite,rustls,sqlx-toml
@@ -184,15 +194,16 @@ Filebase is configured via environment variables (loaded from `.env`):
 Docker notes:
 
 - `compose.yml` mounts `${DATA_DIR:-./.data}`, `${DATABASE_BACKUP:-./.backups}`, and `${STORAGE_DIR:-./.storage}` into their respective container paths.
-- The directory in `DATABASE_URL` is created automatically on startup if it doesn't already exist.
+- The directory in `DATABASE_URL` is created automatically on startup if it does not already exist.
+- The official container image runs as an unprivileged user (`nonroot`, UID `65532`). When using host volume mounts on Linux, create directories beforehand or pass `--user "$(id -u):$(id -g)"`.
 
 ---
 
 ## Database Migrations
 
-Migrations are embedded into the application binary and apply automatically whenever Filebase starts.
+Migrations are embedded into the application binary and execute automatically on startup.
 
-`sqlx-cli` is only needed when creating new migrations or preparing query metadata for offline builds. Make sure `DATABASE_URL` is set in your `.env` before running SQLx commands.
+`sqlx-cli` is only required when creating new migrations or preparing query metadata for offline builds. Ensure `DATABASE_URL` is set in `.env` before running SQLx commands.
 
 ### Creating Migrations
 
@@ -200,11 +211,11 @@ Migrations are embedded into the application binary and apply automatically when
 sqlx migrate add <migration_name>
 ```
 
-This creates a timestamped SQL file in `migrations/`. Always add a new migration instead of editing an existing one that has already been applied.
+This creates a timestamped SQL file in `migrations/`. Always add a new migration rather than modifying migrations that have already run.
 
 ### Offline Query Metadata
 
-Docker builds with `SQLX_OFFLINE=true`. If you modify queries or schema definitions, update the `.sqlx/` query cache:
+Docker builds with `SQLX_OFFLINE=true`. When modifying queries or schema definitions, update the `.sqlx/` query cache:
 
 ```bash
 cargo sqlx prepare

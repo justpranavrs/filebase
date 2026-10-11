@@ -1,63 +1,118 @@
-# Docker
+# Quick reference
 
-Run Filebase using the official pre-built Docker container image.
+- **Maintained by**: [Pranav R S](https://github.com/justpranavrs)
+- **Where to get help**: [GitHub Discussions](https://github.com/justpranavrs/filebase/discussions) or [GitHub Issues](https://github.com/justpranavrs/filebase/issues)
 
----
+## Supported tags and respective `Dockerfile` links
 
-## Overview
+- [`0.1.0-alpha`](https://github.com/justpranavrs/filebase/blob/cdd7082a7783546426d327cf9c0e554d1899cc18/Dockerfile)
 
-Filebase is an open-source, self-hosted document management system for personal files and records. It runs with zero cloud dependencies, using SQLite for structured metadata and local disk storage for files.
+## Quick reference (cont.)
 
----
+- **Where to file issues**: [https://github.com/justpranavrs/filebase/issues](https://github.com/justpranavrs/filebase/issues)
+- **Supported architectures**: `linux/amd64`
+- **Source of this description**: [repo's docker/ directory](https://github.com/justpranavrs/filebase/tree/main/docker)
 
-## Pull the Image
+# What is Filebase?
 
-Pull the latest official image from Docker Hub:
+<p>
+  <img src="https://raw.githubusercontent.com/justpranavrs/filebase/main/static/favicon.svg" width="64" height="64" alt="Filebase">
+</p>
 
-```bash
-docker pull justpranavrs/filebase:latest
+Filebase is an open-source, self-hosted document management system built for storing personal records, certificates, and files locally. It operates with zero cloud dependencies, using SQLite for structured metadata and local disk storage for document files.
+
+The web interface is server-rendered using Askama templates and HTMX, providing fast in-page updates without client-side single-page framework overhead.
+
+# How to use this image
+
+### Start a Filebase instance
+
+```console
+$ mkdir -p data storage
+$ docker run --name some-filebase \
+    -p 3000:3000 \
+    --user "$(id -u):$(id -g)" \
+    -v ./data:/var/lib/filebase/data \
+    -v ./storage:/var/lib/filebase/storage \
+    -d justpranavrs/filebase:0.1.0-alpha
 ```
 
----
+Database migrations execute automatically when the container starts. Once running, access the web interface at `http://localhost:3000`.
 
-## Quick Start
+### ... via `docker compose`
 
-### Using `docker run`
+Example `compose.yml` for Filebase:
 
-Run the container with persistent storage volumes for SQLite metadata and uploaded files:
-
-```bash
-docker run -d \
-  --name filebase \
-  -p 3000:3000 \
-  -v ./data:/var/lib/filebase/data \
-  -v ./storage:/var/lib/filebase/storage \
-  --restart unless-stopped \
-  justpranavrs/filebase:latest
+```yaml
+services:
+  filebase:
+    image: justpranavrs/filebase:0.1.0-alpha
+    container_name: filebase
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/var/lib/filebase/data
+      - ./storage:/var/lib/filebase/storage
 ```
 
-Once running, access the web interface at `http://localhost:3000`. Database migrations execute automatically on container startup.
+Run `docker compose up -d`, wait for initialization to complete, and visit `http://localhost:3000`.
 
----
+## Where to store data
 
-## Container Volumes & Ports
+Two directories inside the container require persistent storage:
 
-| Type | Path / Port | Description |
-| :--- | :--- | :--- |
-| **Port** | `3000` | HTTP web server port |
-| **Volume** | `/var/lib/filebase/data` | Directory storing the SQLite database (`filebase.db`) |
-| **Volume** | `/var/lib/filebase/storage` | Directory storing uploaded document files |
+- `/var/lib/filebase/data`: Stores the active SQLite database file (`filebase.db`).
+- `/var/lib/filebase/storage`: Stores uploaded document payloads.
 
----
+Important Note: Mount host directories or named volumes to these locations. If these paths are not mounted, all stored files and database records will be lost whenever the container is updated or removed.
 
-## Configuration
+### Arbitrary `--user` Notes
 
-The image includes sensible defaults and can be configured with environment variables:
+This image runs as the non-root user `nonroot` with UID `65532` by default. When mounting host directories on Linux, ensure the directories exist and are writable by UID `65532` (for example via `chmod 777 data storage`), or pass `--user "$(id -u):$(id -g)"` to run the container using your host user credentials.
 
-| Variable | Default | Description |
-| :--- | :--- | :--- |
-| `SERVER_HOST` | `0.0.0.0` | Network interface to bind to |
-| `SERVER_PORT` | `3000` | Port Filebase listens on inside the container |
-| `DATABASE_URL` | `sqlite:/var/lib/filebase/data/filebase.db` | SQLite connection URL |
-| `STORAGE_DIR` | `/var/lib/filebase/storage` | Path where uploaded files are stored |
-| `LOG_LEVEL` | `info` | Logging verbosity (`debug`, `info`, `warn`, `error`) |
+## Environment Variables
+
+The Filebase image uses environment variables to configure its runtime behavior. All variables have sensible defaults pre-configured in the container.
+
+### `SERVER_HOST`
+
+This variable defines the network interface Filebase binds to inside the container. Defaults to `0.0.0.0`.
+
+### `SERVER_PORT`
+
+This variable defines the port Filebase listens on inside the container. Defaults to `3000`.
+
+### `DATABASE_URL`
+
+This variable defines the SQLite database connection string. Defaults to `sqlite:/var/lib/filebase/data/filebase.db`.
+
+### `STORAGE_DIR`
+
+This variable defines the directory where uploaded documents are stored. Defaults to `/var/lib/filebase/storage`.
+
+### `LOG_LEVEL`
+
+This variable controls logging verbosity (`debug`, `info`, `warn`, `error`). Defaults to `info`.
+
+### `SERVER_TIMEOUT_SECONDS`
+
+This optional variable sets the HTTP request timeout in seconds. Defaults to `30`.
+
+### `DATABASE_MAX_CONNECTIONS`
+
+This optional variable sets the maximum number of SQLite connections in the pool. Defaults to `10`.
+
+### `DATABASE_TIMEOUT_SECONDS`
+
+This optional variable sets the database lock acquire timeout in seconds. Defaults to `15`.
+
+## Image details
+
+- **Base image**: `gcr.io/distroless/static-debian13:nonroot`
+- **User**: `65532:65532` (`nonroot`)
+- **Binary**: Statically compiled Rust binary linked against `musl`
+
+# License
+
+View [license information](https://github.com/justpranavrs/filebase/blob/main/LICENSE) for the software contained in this image.

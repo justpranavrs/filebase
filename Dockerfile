@@ -32,6 +32,7 @@ ENV SERVER_HOST=0.0.0.0
 ENV SERVER_PORT=3000
 ENV DATABASE_URL=sqlite:/var/lib/filebase/data/filebase.db
 ENV STORAGE_DIR=/var/lib/filebase/storage
+ENV LOG_LEVEL=info
 
 EXPOSE ${SERVER_PORT}
 CMD ["./filebase"]
