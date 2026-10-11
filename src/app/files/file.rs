@@ -5,7 +5,7 @@ use askama::Template;
 use axum::{
     extract::{Form, Multipart, Path, Query, State},
     http::{
-        HeaderMap, HeaderName, HeaderValue, StatusCode,
+        HeaderMap, HeaderValue, StatusCode,
         header::{CACHE_CONTROL, CONTENT_DISPOSITION, CONTENT_TYPE, ETAG, IF_NONE_MATCH},
     },
     response::{Html, IntoResponse, Response},
@@ -22,9 +22,6 @@ use crate::{
     service::{FileService, StorageService},
     storage::checksum,
 };
-
-// Custom header name for Nginx X-Accel-Redirect support.
-const X_ACCEL_REDIRECT: HeaderName = HeaderName::from_static("x-accel-redirect");
 
 // Query parameters for navigating destination folders in the move modal.
 #[derive(Debug, Deserialize)]
@@ -79,18 +76,10 @@ fn resolve_content_disposition(disposition: Disposition, name: &str) -> String {
     }
 }
 
-// Builds the accelerated redirect response headers including ETag checksum.
-fn resolve_headers(
-    storage_svc: &StorageService,
-    key: &Uuid,
-    file: &File,
-    disposition: Disposition,
-) -> HeaderMap {
+// Builds response headers including Content-Type, Content-Disposition, and ETag checksum.
+fn resolve_headers(file: &File, disposition: Disposition) -> HeaderMap {
     let mut headers = HeaderMap::new();
     headers.insert(CACHE_CONTROL, HeaderValue::from_static("no-cache"));
-    if let Ok(val) = storage_svc.resolve_storage(key).parse() {
-        headers.insert(X_ACCEL_REDIRECT, val);
-    }
     if let Ok(val) = file.content_type.parse() {
         headers.insert(CONTENT_TYPE, val);
     }
@@ -127,7 +116,7 @@ fn not_modified_response(checksum: &str) -> Response {
     (StatusCode::NOT_MODIFIED, headers).into_response()
 }
 
-// Request handler to view a file inline via accelerated redirect.
+// Request handler to view a file inline by serving bytes directly from storage.
 pub async fn file(
     State(svc): State<FileService>,
     State(storage_svc): State<StorageService>,
@@ -138,11 +127,12 @@ pub async fn file(
     if is_not_modified(&headers, &file.checksum) {
         return Ok(not_modified_response(&file.checksum));
     }
-    let headers = resolve_headers(&storage_svc, &key, &file, Disposition::Inline);
-    Ok(headers.into_response())
+    let data = storage_svc.read_file(&file.object_key).await?;
+    let resp_headers = resolve_headers(&file, Disposition::Inline);
+    Ok((resp_headers, data).into_response())
 }
 
-// Request handler to download a file attachment via accelerated redirect.
+// Request handler to download a file attachment by serving bytes directly from storage.
 pub async fn download_file(
     State(svc): State<FileService>,
     State(storage_svc): State<StorageService>,
@@ -153,8 +143,9 @@ pub async fn download_file(
     if is_not_modified(&headers, &file.checksum) {
         return Ok(not_modified_response(&file.checksum));
     }
-    let headers = resolve_headers(&storage_svc, &key, &file, Disposition::Attachment);
-    Ok(headers.into_response())
+    let data = storage_svc.read_file(&file.object_key).await?;
+    let resp_headers = resolve_headers(&file, Disposition::Attachment);
+    Ok((resp_headers, data).into_response())
 }
 
 // Request handler to process multipart file uploads and return the new file card with toast.

@@ -24,9 +24,10 @@ impl StorageService {
         Self { cfg }
     }
 
-    // Resolves the full storage path using the file key and base directory.
-    pub fn resolve_storage(&self, key: &Uuid) -> String {
-        format!("/storage/{}", key)
+    // Reads all binary data for a stored file by its object key.
+    pub async fn read_file(&self, key: &Uuid) -> Result<Vec<u8>, Error> {
+        let path = self.resolve_path(key);
+        fs::read(&path).await.map_err(Into::into)
     }
 
     // Writes binary data to disk under a newly generated UUID object key.

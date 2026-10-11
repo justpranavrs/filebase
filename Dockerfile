@@ -26,6 +26,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
 FROM alpine:3.24 AS runtime
 WORKDIR /app
 COPY --from=builder /app/filebase .
+COPY static ./static
 
 EXPOSE ${SERVER_PORT:-3000}
 CMD ["./filebase"]

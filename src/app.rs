@@ -35,7 +35,7 @@ use tracing::{Level, info};
 use crate::{
     config::{ServerConfig, StorageConfig},
     queries::{FileDB, FolderDB},
-    service::{FileService, StorageService},
+    service::{FileService, StorageService, assets},
 };
 
 // Define a constant for the "x-request-id" header name
@@ -121,7 +121,8 @@ fn create_router(cfg: &ServerConfig, strg_cfg: &StorageConfig, pool: SqlitePool)
         .route("/", get(files::directory::root))
         .route("/health", get(health::health_handler))
         .nest("/files", files::router())
-        .fallback(fallback::fallback)
         .with_state(state)
+        .merge(assets::router())
+        .fallback(fallback::fallback)
         .layer(layer)
 }

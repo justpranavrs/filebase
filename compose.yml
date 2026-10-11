@@ -6,10 +6,10 @@ name: "filebase"
 services:
   filebase:
     build: .
-    image: ${APP_NAME:-filebase}-${VERSION}
-    container_name: ${APP_NAME:-filebase}-server
-    # ports:
-    #   - "${SERVER_PORT:-3000}:${SERVER_PORT:-3000}"
+    image: ${IMAGE_NAME:-filebase}:${VERSION:-0.1.0-alpha}
+    container_name: filebase-server
+    ports:
+      - "127.0.0.1:${SERVER_PORT:-3000}:${SERVER_PORT:-3000}"
     env_file:
       - .env.docker
     volumes:
@@ -19,8 +19,8 @@ services:
 
   backups:
     build: ./backup
-    image: ${APP_NAME:-filebase}-backup-${VERSION}
-    container_name: ${APP_NAME:-filebase}-backup
+    image: ${IMAGE_NAME:-filebase}:backup-${VERSION:-0.1.0-alpha}
+    container_name: filebase-backup
     environment:
       - AGE_DAYS=7
       - INTERVAL_SECONDS=3600
@@ -28,17 +28,4 @@ services:
     volumes:
       - ${DATA_DIR:-./.data}:/var/lib/filebase/data
       - ${DATABASE_BACKUP:-./.backups}:/var/lib/filebase/backups
-    restart: unless-stopped
-
-  nginx:
-    build:
-      context: .
-      dockerfile: nginx/Dockerfile
-    image: ${APP_NAME:-filebase}-nginx-${VERSION}
-    container_name: ${APP_NAME:-filebase}-nginx
-    ports:
-      - "${REVERSE_PROXY_PORT:-80}:80"
-    volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-      - ${STORAGE_DIR:-./.storage}:/var/lib/filebase/storage:ro
     restart: unless-stopped
