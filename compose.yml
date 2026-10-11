@@ -10,16 +10,6 @@ services:
     container_name: filebase-server
     ports:
       - "127.0.0.1:${SERVER_PORT:-3000}:3000"
-    environment:
-      - SERVER_HOST=0.0.0.0
-      - SERVER_PORT=3000
-      - DATABASE_URL=sqlite:/var/lib/filebase/data/filebase.db
-      - STORAGE_DIR=/var/lib/filebase/storage
-      - SERVER_TIMEOUT_SECONDS=${SERVER_TIMEOUT_SECONDS:-30}
-      - DATABASE_MAX_CONNECTIONS=${DATABASE_MAX_CONNECTIONS:-10}
-      - DATABASE_TIMEOUT_SECONDS=${DATABASE_TIMEOUT_SECONDS:-15}
-      - LOG_LEVEL=${LOG_LEVEL:-debug}
-      - TZ=${TZ:-Asia/Kolkata}
     volumes:
       - ${DATA_DIR:-./.data}:/var/lib/filebase/data
       - ${STORAGE_DIR:-./.storage}:/var/lib/filebase/storage

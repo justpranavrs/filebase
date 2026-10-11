@@ -157,7 +157,7 @@ Filebase is configured via environment variables (loaded from `.env`):
 | `DATABASE_BACKUP`          | Directory where database snapshots are kept          | `./.backups`                 |
 | `STORAGE_DIR`              | Directory where uploaded files are stored            | `./.storage`                 |
 | `LOG_LEVEL`                | Logging verbosity (`debug`, `info`, `warn`, `error`) | `debug`                      |
-| `SERVER_HOST`              | Host address Filebase binds to                       | `filebase`                   |
+| `SERVER_HOST`              | Host address Filebase binds to                       | `127.0.0.1`                  |
 | `SERVER_PORT`              | Port Filebase listens on                             | `3000`                       |
 | `SERVER_TIMEOUT_SECONDS`   | HTTP request timeout in seconds                      | `30`                         |
 | `DATABASE_URL`             | SQLite connection string                             | `sqlite:./.data/filebase.db` |

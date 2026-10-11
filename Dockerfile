@@ -28,5 +28,10 @@ WORKDIR /app
 COPY --from=builder /app/filebase .
 COPY static ./static
 
-EXPOSE ${SERVER_PORT:-3000}
+ENV SERVER_HOST=0.0.0.0
+ENV SERVER_PORT=3000
+ENV DATABASE_URL=sqlite:/var/lib/filebase/data/filebase.db
+ENV STORAGE_DIR=/var/lib/filebase/storage
+
+EXPOSE ${SERVER_PORT}
 CMD ["./filebase"]

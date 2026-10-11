@@ -2,8 +2,9 @@
 # Use of this source code is governed by the MIT license that can be found in the LICENSE file.
 
 FROM alpine:3.24
-RUN apk add --no-cache sqlite
+RUN apk upgrade --no-cache && apk add --no-cache sqlite
 
 # Copy and run the backup script.
 COPY --chmod=755 backup.sh /backup.sh
+USER 65532:65532
 CMD ["/backup.sh"]

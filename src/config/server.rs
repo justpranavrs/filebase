@@ -17,7 +17,7 @@ impl Default for ServerConfig {
     // Provides default configuration values for the HTTP server.
     fn default() -> Self {
         Self {
-            host: "filebase".into(),
+            host: "127.0.0.1".into(),
             port: 3000,
             timeout_seconds: 30,
         }
