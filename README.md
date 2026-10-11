@@ -4,6 +4,78 @@ An open-source, self-hosted document management system for personal files and re
 
 ---
 
+## Introduction
+
+Filebase is a self-hosted document management system built for personal records, certificates, and important files. Beyond standard file storage, it manages document lifecycles with custom expiry alerts delivered to services like WhatsApp and Telegram before critical records expire. Designed to be lightweight and self-host friendly, Filebase runs with zero cloud dependencies, using SQLite for structured metadata and local disk storage for files.
+
+---
+
+## Table of Contents
+
+- [Introduction](#introduction)
+- [Core Architecture](#core-architecture)
+- [Core Features](#core-features)
+- [Prerequisites](#prerequisites)
+- [Getting Started](#getting-started)
+- [Configuration](#configuration)
+- [Database Migrations](#database-migrations)
+- [Nginx](#nginx)
+- [Production Notes](#production-notes)
+- [License](#license)
+
+---
+
+## Core Architecture
+
+Filebase runs as three lightweight services (Nginx, Axum, and an automated backup worker) backed by SQLite and local disk storage:
+
+- **Nginx**: Front-facing reverse proxy. Serves static assets directly, proxies web requests to Axum, and streams downloads straight from storage via `X-Accel-Redirect`.
+- **Axum**: Rust application server handling HTTP requests, file uploads, folder operations, and server-side template rendering with Askama.
+- **SQLite**: Embedded database storing folder structures, file metadata, and checksums.
+- **Disk Storage**: Local directory holding uploaded files, stored by UUID object key.
+- **Backup Service**: Companion container that takes periodic SQLite snapshots using `.backup` without locking active reads or writes.
+
+```mermaid
+---
+config:
+  flowchart:
+    curve: linear
+---
+flowchart TD
+    Client[Client] --> Nginx[Nginx]
+
+    Nginx -->|Static| Static[Static Assets]
+    Nginx -->|Proxy| App[Axum App]
+    Nginx -->|Sendfile Stream| Storage[(Disk Storage)]
+
+    App -->|Metadata| DB[(SQLite)]
+    App -->|Write & Delete| Storage
+
+    DB -->|Snapshots| Backup[Backup Service]
+```
+
+---
+
+## Core Features
+
+### Accelerated File Streaming
+
+Filebase delegates file downloads and inline media streaming directly to Nginx. When a user requests a file, Axum checks permissions and headers, then emits an internal redirect header (`X-Accel-Redirect`). Nginx intercepts the header and transfers the file directly from disk storage to the browser, keeping the application process free from heavy file transfer overhead.
+
+### Checksum Verification and Caching
+
+Files are hashed with SHA-256 during upload and stored with their metadata. When a browser requests a previously downloaded file, Filebase compares the stored checksum with the incoming `If-None-Match` header. If they match, it returns an empty `304 Not Modified`, saving disk reads and network bandwidth.
+
+### Folder Hierarchy and Navigation
+
+Directory trees, breadcrumb paths, and move validations run directly inside SQLite using recursive queries. This resolves ancestor chains in a single query while preventing circular moves where a folder could accidentally be moved into itself or its descendants.
+
+### Fast Server Rendering and Dynamic UI
+
+HTML templates compile directly into native Rust code with Askama at build time, eliminating runtime template parsing. On the frontend, HTMX swaps updated HTML fragments directly into the page during uploads, renames, and folder navigation, providing a responsive experience without a heavy single-page application framework.
+
+---
+
 ## Prerequisites
 
 - [Rust](https://www.rust-lang.org)
@@ -17,42 +89,12 @@ An open-source, self-hosted document management system for personal files and re
 
 ---
 
-## How it works
-
-```mermaid
----
-config:
-  flowchart:
-    curve: linear
----
-flowchart TB
-    B[Browser / Client] -->|HTTP Request| N[Nginx Proxy]
-    N -->|Proxy Request| A[Axum Application]
-    N -->|Static Files| ST[Static Assets]
-    A -->|HTML Response| N
-    A -->|Template Data| T[Askama Templates]
-    T -->|Rendered HTML| A
-    A -->|Queries & Connection Pool| D[(SQLite Database)]
-    M[Migrations Runner] -->|Apply Schema| D
-    D -->|VACUUM INTO Snapshot| S[Backup Service]
-    S -->|Atomic Rotate & Purge| F[Backup Files]
-```
-
-Database migrations are embedded directly into the binary and run automatically when Filebase boots.
-
----
-
 ## Getting Started
 
 ### Docker
 
-Running Docker Compose requires `lightningcss` to bundle CSS assets before building the containers:
-
-```bash
-npm install -g lightningcss
-```
-
 1. Clone and configure:
+
    ```bash
    git clone https://github.com/justpranavrs/filebase.git
    cd filebase
@@ -60,29 +102,49 @@ npm install -g lightningcss
    cp .env.example .env
    ```
 
-2. Start the services (or run `make docker-up`):
+2. Start the services:
+
    ```bash
    docker compose up --build
    ```
 
-Visit `http://localhost`.
+   To bundle updated CSS assets before starting containers, run:
 
-On startup, Filebase automatically applies any pending database migrations before serving traffic.
+   ```bash
+   make docker-up
+   # or: make css && docker compose up --build
+   ```
 
-> **Note:** Migrations are baked into the binary at build time. Whenever you add or edit migrations, rebuild the container with `docker compose up --build`.
+3. Open `http://localhost` in your browser.
 
-### Local
+Database migrations run automatically on startup.
+
+> **Note:** Migrations are compiled into the binary. Whenever you add or edit migrations, rebuild the container with `docker compose up --build`.
+
+### Local Development
+
+1. Clone and configure:
+
+   ```bash
+   git clone https://github.com/justpranavrs/filebase.git
+   cd filebase
+
+   cp .env.example .env
+   ```
+
+2. Build stylesheets and start the server:
+   ```bash
+   make css
+   cargo run
+   ```
+
+To run with automatic reload during development:
 
 ```bash
-git clone https://github.com/justpranavrs/filebase.git
-cd filebase
-
-cp .env.example .env
-
-cargo run
+cargo watch -x run
 ```
 
-Migrations run automatically on boot. To create new migration files or prepare offline query cache data, install `sqlx-cli`:
+Database migrations run automatically on boot. To create new migration files or refresh offline query metadata, install `sqlx-cli`:
 
 ```bash
 cargo install sqlx-cli --no-default-features --features sqlite,rustls,sqlx-toml
@@ -94,50 +156,51 @@ cargo install sqlx-cli --no-default-features --features sqlite,rustls,sqlx-toml
 
 Filebase is configured via environment variables (loaded from `.env`):
 
-| Variable | Description | Default (`.env`) |
-|---|---|---|
-| `APP_NAME` | Project name, used for container and image naming | `filebase` |
-| `TZ` | Time zone used by containers | `Asia/Kolkata` |
-| `DATA_DIR` | Directory storing the active SQLite database | `./.data` |
-| `DATABASE_BACKUP` | Directory where database snapshots are kept | `./.backups` |
-| `STORAGE_DIR` | Directory where uploaded files are stored | `./storage` |
-| `REVERSE_PROXY_PORT` | Published host port for the bundled Nginx proxy | `80` |
-| `LOG_LEVEL` | Logging verbosity (`debug`, `info`, `warn`, `error`) | `debug` |
-| `SERVER_HOST` | Address Filebase binds to | `filebase` |
-| `SERVER_PORT` | Port Filebase listens on | `3000` |
-| `SERVER_TIMEOUT_SECONDS` | HTTP request timeout in seconds | `30` |
-| `DATABASE_URL` | SQLite connection string | `sqlite:./.data/filebase.db` |
-| `DATABASE_MAX_CONNECTIONS` | Maximum connection pool size | `10` |
-| `DATABASE_TIMEOUT_SECONDS` | Database lock acquire timeout in seconds | `15` |
+| Variable                   | Description                                          | Default (`.env`)             |
+| -------------------------- | ---------------------------------------------------- | ---------------------------- |
+| `APP_NAME`                 | Project name, used for container and image naming    | `filebase`                   |
+| `VERSION`                  | Application release version                          | `0.1.0`                      |
+| `TZ`                       | Container time zone                                  | `Asia/Kolkata`               |
+| `DATA_DIR`                 | Directory storing the active SQLite database         | `./.data`                    |
+| `DATABASE_BACKUP`          | Directory where database snapshots are kept          | `./.backups`                 |
+| `STORAGE_DIR`              | Directory where uploaded files are stored            | `./.storage`                 |
+| `REVERSE_PROXY_PORT`       | Published host port for the bundled Nginx proxy      | `80`                         |
+| `LOG_LEVEL`                | Logging verbosity (`debug`, `info`, `warn`, `error`) | `debug`                      |
+| `SERVER_HOST`              | Host address Filebase binds to                       | `filebase`                   |
+| `SERVER_PORT`              | Port Filebase listens on                             | `3000`                       |
+| `SERVER_TIMEOUT_SECONDS`   | HTTP request timeout in seconds                      | `30`                         |
+| `DATABASE_URL`             | SQLite connection string                             | `sqlite:./.data/filebase.db` |
+| `DATABASE_MAX_CONNECTIONS` | Maximum connection pool size                         | `10`                         |
+| `DATABASE_TIMEOUT_SECONDS` | Database lock acquire timeout in seconds             | `15`                         |
 
 Docker notes:
-- `compose.yml` mounts `${DATA_DIR:-./.data}`, `${DATABASE_BACKUP:-./backups}`, and `${STORAGE_DIR:-./storage}` into their respective container paths.
+
+- `compose.yml` mounts `${DATA_DIR:-./.data}`, `${DATABASE_BACKUP:-./.backups}`, and `${STORAGE_DIR:-./.storage}` into their respective container paths.
 - The directory in `DATABASE_URL` is created automatically on startup if it doesn't already exist.
 
 ---
 
 ## Database Migrations
 
-Migrations are embedded into the binary and run automatically whenever the application starts.
+Migrations are embedded into the application binary and apply automatically whenever Filebase starts.
 
-`sqlx-cli` is only needed when creating new migrations or refreshing offline query metadata. Ensure `DATABASE_URL` is set in your `.env` before running SQLx commands.
+`sqlx-cli` is only needed when creating new migrations or preparing query metadata for offline builds. Make sure `DATABASE_URL` is set in your `.env` before running SQLx commands.
 
-### Adding Migrations
-
-Generate a new migration file:
+### Creating Migrations
 
 ```bash
 sqlx migrate add <migration_name>
 ```
 
-This creates a new timestamped SQL file in `migrations/`. Always add a new migration instead of modifying an existing one that has already been applied.
+This creates a timestamped SQL file in `migrations/`. Always add a new migration instead of editing an existing one that has already been applied.
 
 ### Offline Query Metadata
 
-Docker builds with `SQLX_OFFLINE=true`. If you modify any SQL queries or table schemas, refresh the `.sqlx/` cache and commit it:
+Docker builds with `SQLX_OFFLINE=true`. If you modify queries or schema definitions, update the `.sqlx/` query cache:
 
 ```bash
 cargo sqlx prepare
+# or: make sqlx-prepare
 ```
 
 ---
@@ -157,17 +220,23 @@ Choose the setup that fits your server infrastructure:
 
 ### Option A: Single Centralized Reverse Proxy
 
-Use this if you want your host's Nginx to serve static files and protect storage directly without running the extra Nginx container in Docker.
+Use this if your host already runs Nginx and you want it to serve static files and storage directly, without running the extra Nginx container in Docker.
 
-1. Do not start the `nginx` container (run `docker compose up -d filebase backups` or remove the `nginx` service from `compose.yml`).
+1. Expose Filebase's port by uncommenting `ports:` under `filebase` in `compose.yml`:
 
-2. Expose Filebase's port by uncommenting `ports:` under `filebase` in `compose.yml`:
    ```yaml
    ports:
      - "${SERVER_PORT:-3000}:${SERVER_PORT:-3000}"
    ```
 
+2. Start only Filebase and the backup service:
+
+   ```bash
+   docker compose up -d filebase backups
+   ```
+
 3. Copy the configuration files to your host:
+
    ```bash
    sudo cp nginx/filebase.conf /etc/nginx/snippets/filebase.conf
    sudo cp nginx/default.conf /etc/nginx/conf.d/filebase.conf
@@ -183,8 +252,8 @@ Use this if you want your host's Nginx to serve static files and protect storage
        ```
      - Change `server_name localhost;` to `server_name <domain>;`.
    - In `/etc/nginx/snippets/filebase.conf`:
-     - Confirm `/storage/` points to your `STORAGE_DIR` (e.g., `/srv/filebase/storage/`).
-     - Confirm `/static/` points to your static assets (e.g., `/srv/filebase/static/`).
+     - Confirm `/storage/` points to your `STORAGE_DIR` (e.g. `/srv/filebase/storage/`).
+     - Confirm `/static/` points to your static assets (e.g. `/srv/filebase/static/`).
 
 5. Issue an SSL certificate:
    ```bash
@@ -193,14 +262,16 @@ Use this if you want your host's Nginx to serve static files and protect storage
 
 ### Option B: Chained Reverse Proxy
 
-Use this if you already run a centralized host proxy (such as Nginx, Caddy, or Traefik) and want the bundled Nginx container to continue handling static assets and internal storage rules. **No files need to be copied to your host.**
+Use this if your host already runs a reverse proxy (such as Nginx, Caddy, or Traefik) and you want the bundled Nginx container to continue handling static assets and internal storage rules. **No files need to be copied to your host.**
 
-1. In `.env`, set `REVERSE_PROXY_PORT` to an unused host port (e.g., `8080`):
+1. In `.env`, set `REVERSE_PROXY_PORT` to an unused host port:
+
    ```env
    REVERSE_PROXY_PORT="8080"
    ```
 
 2. In your host Nginx configuration (e.g. `/etc/nginx/conf.d/filebase.conf`), proxy traffic to that port:
+
    ```nginx
    server {
        listen 80;

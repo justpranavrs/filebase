@@ -1,0 +1,9 @@
+<!-- Out-of-band Swap: Appends Notification Toast to #toasts Container -->
+<div id="toasts" hx-swap-oob="beforeend">
+  <!-- Interactive Toast Notification: Click to Dismiss or Auto-Remove on Animation End -->
+  <div
+    class="toast {{ toast_type }}"
+    onclick="this.classList.add('toast-dismissing')"
+    onanimationend="this.remove()"
+  >{{ message }}</div>
+</div>

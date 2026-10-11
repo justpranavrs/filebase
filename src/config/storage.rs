@@ -12,9 +12,10 @@ pub struct StorageConfig {
 
 // Provides default values for the StorageConfig struct.
 impl Default for StorageConfig {
+    // Provides default configuration values for file storage.
     fn default() -> Self {
         Self {
-            dir: "/var/lib/filebase/storage".into(),
+            dir: "./.storage".into(),
         }
     }
 }

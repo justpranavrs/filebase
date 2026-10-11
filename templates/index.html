@@ -3,11 +3,109 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="/static/pico.min.css" />
-    <script src="/static/htmx.min.js"></script>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="stylesheet" href="/static/app.min.css" />
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+    <link rel="preload" href="/static/fonts/MonofurNerdFont-Regular.woff2" as="font" type="font/woff2" crossorigin />
+    <script src="/static/htmx.min.js" defer></script>
+    <script src="/static/app.js" defer></script>
     <title>Filebase</title>
   </head>
+  <!-- Global HTMX target: internal navigations swap content into #app without full reloads -->
   <body hx-target="#app" hx-swap="innerHTML">
-    <div id = "app">{{ content|safe }}</div>
+    <!-- Toast notifications container swapped out-of-band by response fragments -->
+    <div id="toasts"></div>
+
+    <!-- Delete Confirmation Dialog -->
+    <dialog id="delete-dialog" class="modal">
+      <form method="dialog" class="modal-backdrop">
+        <button type="submit" aria-label="Close"></button>
+      </form>
+
+      <div class="modal-content">
+        <div class="modal-header">
+          <span class="modal-title" id="delete-dialog-title">Delete Confirmation</span>
+          <form method="dialog">
+            <button
+              type="submit"
+              class="btn btn-ghost modal-close-btn"
+              title="Close"
+              aria-label="Close"
+            >
+              <svg class="icon icon-sm" aria-hidden="true">
+                <use href="/static/icons.svg#close"></use>
+              </svg>
+            </button>
+          </form>
+        </div>
+
+        <div class="modal-body">
+          <p class="modal-confirm-text">
+            Are you sure you want to delete <strong id="delete-item-name"></strong>? This action cannot be undone.
+          </p>
+          <div class="modal-confirm-actions">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              onclick="document.getElementById('delete-dialog').close()"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              id="delete-action-btn"
+              class="btn btn-danger"
+            >
+              <svg class="icon icon-sm" aria-hidden="true">
+                <use href="/static/icons.svg#trash"></use>
+              </svg>
+              <span>Delete</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </dialog>
+
+    <div class="layout">
+      <!-- Persistent Application Sidebar -->
+      <aside class="sidebar">
+        <!-- Logo and Home Link -->
+        <a
+          href="/files"
+          class="app-header"
+          hx-get="/files"
+          hx-target="#app"
+          hx-swap="innerHTML"
+          hx-push-url="true"
+        >
+          <div class="app-icon">
+            <svg class="icon" aria-hidden="true">
+              <use href="/static/icons.svg#logo"></use>
+            </svg>
+          </div>
+          <span class="app-title">Filebase</span>
+        </a>
+
+        <!-- Sidebar Navigation Links -->
+        <nav class="nav-links">
+          <a
+            href="/files"
+            class="nav-item active"
+            hx-get="/files"
+            hx-target="#app"
+            hx-swap="innerHTML"
+            hx-push-url="true"
+          >
+            <svg class="icon icon-sm" aria-hidden="true">
+              <use href="/static/icons.svg#folder"></use>
+            </svg>
+            <span>All Files</span>
+          </a>
+        </nav>
+      </aside>
+
+      <!-- Main Application Container -->
+      <main class="main" id="app">{{ content|safe }}</main>
+    </div>
   </body>
 </html>

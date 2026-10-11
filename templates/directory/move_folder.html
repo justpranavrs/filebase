@@ -1,0 +1,138 @@
+<!-- Move Folder Modal Backdrop -->
+<form method="dialog" class="modal-backdrop">
+  <button type="submit" aria-label="Close"></button>
+</form>
+
+<!-- Move Folder Dialog Window -->
+<div class="modal-content move-modal-content">
+  <!-- Modal Header with Title and Close Button -->
+  <div class="modal-header">
+    <span class="modal-title">Move "{{ folder.name }}"</span>
+    <form method="dialog">
+      <button
+        type="submit"
+        class="btn btn-ghost modal-close-btn"
+        title="Close"
+        aria-label="Close"
+      >
+        <svg class="icon icon-sm" aria-hidden="true">
+          <use href="/static/icons.svg#close"></use>
+        </svg>
+      </button>
+    </form>
+  </div>
+
+  <div class="modal-body">
+    <!-- Destination Location Breadcrumb Navigator -->
+    <div class="move-nav-bar">
+      <span class="move-nav-label">Destination:</span>
+      <div class="move-breadcrumbs">
+        {% for ancestor in ancestors %}
+          {% if !loop.first %}
+            <svg class="icon icon-sm move-crumb-sep" aria-hidden="true">
+              <use href="/static/icons.svg#chevron-right"></use>
+            </svg>
+          {% endif %}
+          {% if ancestor.id == current_folder.id %}
+            <span class="move-crumb-current">{{ ancestor.name }}</span>
+            {% if is_same_directory() %}
+              <span class="move-badge">current</span>
+            {% endif %}
+          {% else %}
+            <a
+              href="/files/folder/{{ folder.id }}/move?target_folder_id={{ ancestor.id }}"
+              class="move-crumb-link"
+              hx-get="/files/folder/{{ folder.id }}/move?target_folder_id={{ ancestor.id }}"
+              hx-target="#move-dialog"
+              hx-swap="innerHTML"
+            >{{ ancestor.name }}</a>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Folder Drill-Down Directory List -->
+    <div class="move-folder-list">
+      <!-- Up to Parent Directory Link -->
+      {% if let Some(parent_id) = current_folder.parent_id %}
+        <a
+          href="/files/folder/{{ folder.id }}/move?target_folder_id={{ parent_id }}"
+          class="move-folder-row move-up-row"
+          hx-get="/files/folder/{{ folder.id }}/move?target_folder_id={{ parent_id }}"
+          hx-target="#move-dialog"
+          hx-swap="innerHTML"
+        >
+          <div class="move-folder-row-left">
+            <svg class="icon icon-sm" aria-hidden="true">
+              <use href="/static/icons.svg#chevron-left"></use>
+            </svg>
+            <span class="move-folder-name">..</span>
+          </div>
+        </a>
+      {% endif %}
+
+      <!-- Subfolders in Current Destination -->
+      {% for subfolder in subfolders %}
+        {% if subfolder.id == folder.id %}
+          <!-- Disabled Row: Cannot Move Folder Into Itself -->
+          <div class="move-folder-row disabled" title="Cannot move folder into itself">
+            <div class="move-folder-row-left">
+              <div class="icon-box icon-folder">
+                <svg class="icon icon-sm" aria-hidden="true">
+                  <use href="/static/icons.svg#folder"></use>
+                </svg>
+              </div>
+              <span class="move-folder-name">{{ subfolder.name }}</span>
+            </div>
+            <span class="move-badge">current</span>
+          </div>
+        {% else %}
+          <!-- Subfolder Drill-Down Link -->
+          <a
+            href="/files/folder/{{ folder.id }}/move?target_folder_id={{ subfolder.id }}"
+            class="move-folder-row"
+            hx-get="/files/folder/{{ folder.id }}/move?target_folder_id={{ subfolder.id }}"
+            hx-target="#move-dialog"
+            hx-swap="innerHTML"
+          >
+            <div class="move-folder-row-left">
+              <div class="icon-box icon-folder">
+                <svg class="icon icon-sm" aria-hidden="true">
+                  <use href="/static/icons.svg#folder"></use>
+                </svg>
+              </div>
+              <span class="move-folder-name">{{ subfolder.name }}</span>
+            </div>
+            <svg class="icon icon-sm move-row-arrow" aria-hidden="true">
+              <use href="/static/icons.svg#chevron-right"></use>
+            </svg>
+          </a>
+        {% endif %}
+      {% endfor %}
+
+      <!-- Empty Subfolders Hint -->
+      {% if subfolders.is_empty() %}
+        <div class="move-empty-hint">No subfolders in this directory</div>
+      {% endif %}
+    </div>
+
+    <!-- Confirm Move Action Footer -->
+    <div class="move-footer">
+      <form
+        hx-patch="/files/folder/{{ folder.id }}"
+        hx-target="#folder-{{ folder.id }}"
+        hx-swap="outerHTML"
+        onsubmit="document.getElementById('move-dialog').close()"
+      >
+        <input type="hidden" name="parent_id" value="{{ current_folder.id }}" />
+        {% if can_move() %}
+          <button type="submit" class="btn btn-primary move-submit-btn">Move</button>
+        {% else if is_same_directory() %}
+          <button type="button" class="btn btn-primary move-submit-btn" disabled title="Already in this directory">Move</button>
+        {% else %}
+          <button type="button" class="btn btn-primary move-submit-btn" disabled title="Cannot move folder into itself or a subfolder">Move</button>
+        {% endif %}
+      </form>
+    </div>
+  </div>
+</div>

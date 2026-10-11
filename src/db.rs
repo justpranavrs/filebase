@@ -13,8 +13,7 @@ use crate::config::DatabaseConfig;
 
 // Initializes the database connection pool using the provided configuration.
 pub async fn init(cfg: &DatabaseConfig) -> Result<SqlitePool, sqlx::Error> {
-    let dsn = dsn(cfg);
-    let opts = SqliteConnectOptions::from_str(&dsn)?
+    let opts = SqliteConnectOptions::from_str(&cfg.url)?
         .create_if_missing(true)
         .journal_mode(SqliteJournalMode::Wal)
         .synchronous(SqliteSynchronous::Normal)
@@ -40,9 +39,4 @@ pub async fn init(cfg: &DatabaseConfig) -> Result<SqlitePool, sqlx::Error> {
         .expect("failed to run database migrations");
     info!("database migrations completed");
     Ok(pool)
-}
-
-// Generates the Data Source Name (DSN) for the SQLite database based on the provided configuration.
-fn dsn(cfg: &DatabaseConfig) -> String {
-    format!("sqlite://{}?mode=rwc", cfg.url)
 }

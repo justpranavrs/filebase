@@ -1,10 +1,128 @@
-<li class="folder-item">
+<!-- Folder Item Card Component -->
+<div
+  class="card card-folder"
+  id="folder-{{ folder.id }}"
+  title="{{ folder.name }}"
+>
+  <!-- Main Card Navigation Link -->
   <a
-    hx-get="/folders/{{ folder.id }}"
+    href="/files/folder/{{ folder.id }}"
+    class="card-link"
+    hx-get="/files/folder/{{ folder.id }}"
     hx-target="#app"
     hx-swap="innerHTML"
     hx-push-url="true"
   >
-    {{ folder.name }}
+    <div class="icon-box icon-folder">
+      <svg class="icon" aria-hidden="true">
+        <use href="/static/icons.svg#folder"></use>
+      </svg>
+    </div>
+    <div class="card-info">
+      <span class="card-title">{{ folder.name }}</span>
+    </div>
   </a>
-</li>
+
+  <!-- Card Actions Trigger Button -->
+  <div class="card-actions">
+    <button
+      type="button"
+      class="btn btn-ghost"
+      title="More actions"
+      aria-label="More actions"
+      onclick="this.closest('.card').querySelector('dialog').showModal()"
+    >
+      <svg class="icon icon-sm" aria-hidden="true">
+        <use href="/static/icons.svg#more-vertical"></use>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Actions Dialog Modal -->
+  <dialog class="modal">
+    <!-- Backdrop to Close on Click Outside -->
+    <form method="dialog" class="modal-backdrop">
+      <button type="submit" aria-label="Close"></button>
+    </form>
+
+    <div class="modal-content">
+      <!-- Modal Header with Folder Name and Close Button -->
+      <div class="modal-header">
+        <span class="modal-title">{{ folder.name }}</span>
+        <form method="dialog">
+          <button
+            type="submit"
+            class="btn btn-ghost modal-close-btn"
+            title="Close"
+            aria-label="Close"
+          >
+            <svg class="icon icon-sm" aria-hidden="true">
+              <use href="/static/icons.svg#close"></use>
+            </svg>
+          </button>
+        </form>
+      </div>
+
+      <div class="modal-body">
+        <!-- In-place Folder Rename Form -->
+        <form
+          class="modal-form"
+          hx-post="/files/folder/{{ folder.id }}"
+          hx-target="#folder-{{ folder.id }}"
+          hx-swap="outerHTML"
+        >
+          <label class="modal-label" for="rename-folder-{{ folder.id }}"
+            >Rename</label
+          >
+          <div class="modal-input-group">
+            <input
+              type="text"
+              id="rename-folder-{{ folder.id }}"
+              name="name"
+              value="{{ folder.name }}"
+              required
+              autocomplete="off"
+              class="modal-input"
+            />
+            <button type="submit" class="btn btn-primary modal-save-btn">
+              Save
+            </button>
+          </div>
+        </form>
+
+        <!-- Folder Actions in a concise row -->
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="btn btn-secondary modal-action-btn"
+            title="Move folder"
+            hx-get="/files/folder/{{ folder.id }}/move"
+            hx-target="#move-dialog"
+            hx-swap="innerHTML"
+            onclick="
+              this.closest('dialog').close();
+              document.getElementById('move-dialog').showModal();
+            "
+          >
+            <svg class="icon icon-sm" aria-hidden="true">
+              <use href="/static/icons.svg#folder"></use>
+            </svg>
+            <span>Move</span>
+          </button>
+        </div>
+
+        <!-- Folder Metadata Details -->
+        <div class="modal-details">
+          <div class="detail-row">
+            <span class="detail-label">Created</span>
+            <span class="detail-value">{{ folder.created_at }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Updated</span>
+            <span class="detail-value">{{ folder.updated_at }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </dialog>
+</div>

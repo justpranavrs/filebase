@@ -16,9 +16,23 @@ pub struct Folder {
     pub updated_at: chrono::NaiveDateTime,
 }
 
+// Represents an ancestor folder in the breadcrumb trail.
+#[derive(Debug, Clone)]
+pub struct FolderBreadcrumb {
+    pub id: i64,
+    pub name: String,
+}
+
 // Metadata for creating a new folder in the database.
 #[derive(Debug, Deserialize)]
 pub struct NewFolder {
     pub parent_id: i64,
     pub name: String,
+}
+
+// Metadata for updating an existing folder's name or parent folder location.
+#[derive(Debug, Deserialize)]
+pub struct UpdateFolder {
+    pub parent_id: Option<i64>,
+    pub name: Option<String>,
 }

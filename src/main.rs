@@ -8,10 +8,11 @@ mod logs;
 mod models;
 mod queries;
 mod service;
+mod storage;
 
 use tracing::info;
 
-// The main entrypoint for the application which initializes configuration, logger, database and server.
+// Application entry point that initializes configuration, logging, storage, database, and server.
 #[tokio::main]
 async fn main() {
     let cfg = config::load().expect("invalid configuration loaded");
@@ -20,12 +21,14 @@ async fn main() {
     let log_level = logs::init(&cfg.log);
     info!("logging initialized with level: {}", log_level);
 
+    storage::init(&cfg.storage).expect("could not initialize file storage");
+
     let pool = db::init(&cfg.db)
         .await
         .expect("could not initialize database connection pool");
     info!("database connection pool initialized");
 
-    let bind_address = app::start_server(&cfg.server, pool.clone())
+    let bind_address = app::start_server(&cfg.server, &cfg.storage, pool.clone())
         .await
         .expect("failed to initialize server");
     info!("server shutdown on {}", bind_address);

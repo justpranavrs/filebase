@@ -12,9 +12,10 @@ pub struct LogConfig {
 
 // Provides default values for the LogConfig struct.
 impl Default for LogConfig {
+    // Provides default configuration values for application logging.
     fn default() -> Self {
         Self {
-            level: "info".into(),
+            level: "debug".into(),
         }
     }
 }

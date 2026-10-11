@@ -1,0 +1,21 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                WITH RECURSIVE ancestors(id, parent_id) AS (\n                    SELECT id, parent_id\n                    FROM folders\n                    WHERE id = ?\n\n                    UNION ALL\n\n                    SELECT f.id, f.parent_id\n                    FROM folders f\n                    JOIN ancestors a ON f.id = a.parent_id\n                )\n                SELECT EXISTS(SELECT 1 FROM ancestors WHERE id = ?) AS is_cycle\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "is_cycle",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "dadf6ce680c5a2366a7fcc19f5b7c4a3f809a0734d62aa3b884d95ca342908c2"
+}

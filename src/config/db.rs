@@ -14,9 +14,10 @@ pub struct DatabaseConfig {
 
 // Provides default values for the DatabaseConfig struct.
 impl Default for DatabaseConfig {
+    // Provides default configuration values for the database connection.
     fn default() -> Self {
         Self {
-            url: "sqlite:/var/lib/filebase/data/filebase.db".into(),
+            url: "sqlite:./.data/filebase.db".into(),
             max_connections: 10,
             timeout_seconds: 30,
         }

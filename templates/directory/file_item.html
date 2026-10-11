@@ -1,0 +1,156 @@
+<!-- File Item Card Component -->
+<div
+  class="card card-file"
+  id="file-{{ file.object_key }}"
+  data-id="{{ file.id }}"
+  title="{{ file.name }}"
+>
+  <!-- Main Card Preview Link -->
+  <a
+    href="/files/{{ file.object_key }}"
+    class="card-link"
+    rel="noopener noreferrer"
+  >
+    <div class="icon-box icon-file">
+      <svg class="icon" aria-hidden="true">
+        <use href="/static/icons.svg#file"></use>
+      </svg>
+    </div>
+    <div class="card-info">
+      <span class="card-title">{{ file.name }}</span>
+    </div>
+  </a>
+
+  <!-- Card Actions Trigger Button -->
+  <div class="card-actions">
+    <button
+      type="button"
+      class="btn btn-ghost"
+      title="More actions"
+      aria-label="More actions"
+      onclick="this.closest('.card').querySelector('dialog').showModal()"
+    >
+      <svg class="icon icon-sm" aria-hidden="true">
+        <use href="/static/icons.svg#more-vertical"></use>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Actions Dialog Modal -->
+  <dialog class="modal">
+    <!-- Backdrop to Close on Click Outside -->
+    <form method="dialog" class="modal-backdrop">
+      <button type="submit" aria-label="Close"></button>
+    </form>
+
+    <div class="modal-content">
+      <!-- Modal Header with File Name and Close Button -->
+      <div class="modal-header">
+        <span class="modal-title">{{ file.name }}</span>
+        <form method="dialog">
+          <button
+            type="submit"
+            class="btn btn-ghost modal-close-btn"
+            title="Close"
+            aria-label="Close"
+          >
+            <svg class="icon icon-sm" aria-hidden="true">
+              <use href="/static/icons.svg#close"></use>
+            </svg>
+          </button>
+        </form>
+      </div>
+
+      <div class="modal-body">
+        <!-- In-place File Rename Form -->
+        <form
+          class="modal-form"
+          hx-post="/files/{{ file.object_key }}"
+          hx-target="#file-{{ file.object_key }}"
+          hx-swap="outerHTML"
+        >
+          <label class="modal-label" for="rename-file-{{ file.object_key }}"
+            >Rename</label
+          >
+          <div class="modal-input-group">
+            <input
+              type="text"
+              id="rename-file-{{ file.object_key }}"
+              name="name"
+              value="{{ file.name }}"
+              required
+              autocomplete="off"
+              class="modal-input"
+            />
+            <button type="submit" class="btn btn-primary modal-save-btn">
+              Save
+            </button>
+          </div>
+        </form>
+
+        <!-- File Actions (Download, Move, Delete) in a single concise row -->
+        <div class="modal-actions">
+          <a
+            href="/files/{{ file.object_key }}/download"
+            class="btn btn-secondary modal-action-btn"
+            title="Download file"
+          >
+            <svg class="icon icon-sm" aria-hidden="true">
+              <use href="/static/icons.svg#download"></use>
+            </svg>
+            <span>Download</span>
+          </a>
+
+          <button
+            type="button"
+            class="btn btn-secondary modal-action-btn"
+            title="Move file"
+            hx-get="/files/{{ file.object_key }}/move"
+            hx-target="#move-dialog"
+            hx-swap="innerHTML"
+            onclick="
+              this.closest('dialog').close();
+              document.getElementById('move-dialog').showModal();
+            "
+          >
+            <svg class="icon icon-sm" aria-hidden="true">
+              <use href="/static/icons.svg#folder"></use>
+            </svg>
+            <span>Move</span>
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-danger modal-action-btn"
+            title="Delete file"
+            data-name="{{ file.name }}"
+            data-url="/files/{{ file.object_key }}"
+            data-target="#file-{{ file.object_key }}"
+            onclick="openDeleteModal(this)"
+          >
+            <svg class="icon icon-sm" aria-hidden="true">
+              <use href="/static/icons.svg#trash"></use>
+            </svg>
+            <span>Delete</span>
+          </button>
+        </div>
+
+        <!-- File Metadata Details -->
+        <div class="modal-details">
+          <div class="detail-row">
+            <span class="detail-label">Size</span>
+            <span class="detail-value">{{ file.size }} bytes</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Created</span>
+            <span class="detail-value">{{ file.created_at }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Updated</span>
+            <span class="detail-value">{{ file.updated_at }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </dialog>
+</div>

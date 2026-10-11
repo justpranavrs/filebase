@@ -1,10 +1,10 @@
 {
   "db_name": "SQLite",
-  "query": "\n                SELECT * FROM files \n                WHERE folder_id IS ?\n            ",
+  "query": "\n                DELETE FROM files\n                WHERE object_key = ?\n                RETURNING\n                    id AS \"id!\", folder_id, object_key, name,\n                    size, content_type, checksum,\n                    created_at, updated_at\n            ",
   "describe": {
     "columns": [
       {
-        "name": "id",
+        "name": "id!",
         "ordinal": 0,
         "type_info": "Integer",
         "origin": {
@@ -112,11 +112,11 @@
       false,
       false,
       false,
-      true,
-      true,
+      false,
+      false,
       false,
       false
     ]
   },
-  "hash": "67f5687745b552637ebb00325779f79d04ba951b7e7d43ab6290eb38f8862341"
+  "hash": "d064185918ecd66ac00ea4b569ed417af492dfc618de9e28c9b4b61c1cb80c63"
 }

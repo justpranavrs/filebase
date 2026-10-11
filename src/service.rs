@@ -3,6 +3,8 @@
 
 mod error;
 mod files;
+mod storage;
 
 pub use error::Error;
-pub use files::{Directory, FileService, FolderItems};
+pub use files::{Directory, FileService};
+pub use storage::StorageService;

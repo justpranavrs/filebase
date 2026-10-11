@@ -2,9 +2,11 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE file.
 
 mod error;
+mod fallback;
 mod files;
 mod health;
 mod index;
+mod toast;
 
 pub use error::Error;
 pub use index::render;
@@ -31,17 +33,21 @@ use tower_http::{
 use tracing::{Level, info};
 
 use crate::{
-    config::ServerConfig,
+    config::{ServerConfig, StorageConfig},
     queries::{FileDB, FolderDB},
-    service::FileService,
+    service::{FileService, StorageService},
 };
 
 // Define a constant for the "x-request-id" header name
 const X_REQUEST_ID: HeaderName = HeaderName::from_static("x-request-id");
 
 // Starts the server with the given configuration and returns the bind address as a string.
-pub async fn start_server(cfg: &ServerConfig, pool: SqlitePool) -> io::Result<String> {
-    let app = create_router(cfg, pool);
+pub async fn start_server(
+    cfg: &ServerConfig,
+    strg_cfg: &StorageConfig,
+    pool: SqlitePool,
+) -> io::Result<String> {
+    let app = create_router(cfg, strg_cfg, pool);
     let bind_address = format!("{}:{}", cfg.host, cfg.port);
     let listener = tokio::net::TcpListener::bind(&bind_address).await?;
 
@@ -82,7 +88,7 @@ pub async fn shutdown_signal() {
 }
 
 // Creates a router with the specified server configuration, setting up various middleware layers for request handling.
-fn create_router(cfg: &ServerConfig, pool: SqlitePool) -> Router {
+fn create_router(cfg: &ServerConfig, strg_cfg: &StorageConfig, pool: SqlitePool) -> Router {
     let layer = ServiceBuilder::new()
         .layer(SetRequestIdLayer::new(X_REQUEST_ID, MakeRequestUuid))
         .layer(
@@ -103,12 +109,19 @@ fn create_router(cfg: &ServerConfig, pool: SqlitePool) -> Router {
     let file_db = FileDB::new(pool.clone());
     let folder_db = FolderDB::new(pool.clone());
 
+    let storage_service = StorageService::new(strg_cfg.clone());
+
     let file_service = FileService::new(file_db, folder_db);
-    let file_router = files::new(file_service);
+    let state = files::FileRouterState {
+        svc: file_service,
+        storage_svc: storage_service,
+    };
 
     Router::new()
-        .route("/", get(index::index))
+        .route("/", get(files::directory::root))
         .route("/health", get(health::health_handler))
-        .nest("/folders", file_router)
+        .nest("/files", files::router())
+        .fallback(fallback::fallback)
+        .with_state(state)
         .layer(layer)
 }

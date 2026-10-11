@@ -1,6 +1,7 @@
 // Copyright 2026 Pranav R S.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE file.
 
+use serde::Deserialize;
 use sqlx::types::chrono;
 use uuid::Uuid;
 
@@ -12,8 +13,8 @@ pub struct File {
     pub object_key: Uuid,
     pub name: String,
     pub size: i64,
-    pub content_type: Option<String>,
-    pub checksum: Option<String>,
+    pub content_type: String,
+    pub checksum: String,
     pub created_at: chrono::NaiveDateTime,
     pub updated_at: chrono::NaiveDateTime,
 }
@@ -26,5 +27,12 @@ pub struct NewFile {
     pub name: String,
     pub size: i64,
     pub content_type: Option<String>,
-    pub checksum: Option<String>,
+    pub checksum: String,
+}
+
+// Metadata for updating an existing file's name or folder location.
+#[derive(Debug, Deserialize)]
+pub struct UpdateFile {
+    pub folder_id: Option<i64>,
+    pub name: Option<String>,
 }

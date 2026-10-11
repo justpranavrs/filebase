@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                WITH RECURSIVE ancestors(id, parent_id, name, depth) AS (\n                    SELECT id, parent_id, name, 0 AS depth\n                    FROM folders\n                    WHERE id = ?\n\n                    UNION ALL\n\n                    SELECT f.id, f.parent_id, f.name, a.depth + 1\n                    FROM folders f\n                    JOIN ancestors a ON f.id = a.parent_id\n                )\n                SELECT id, name\n                FROM ancestors\n                ORDER BY depth DESC\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "folders",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "folders",
+            "name": "name"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "212f123493afb0416c9c7d6ecb56131db4b1433eae2b3235eb495830160d0bdd"
+}

@@ -14,6 +14,7 @@ pub struct ServerConfig {
 
 // Provides default values for the ServerConfig struct.
 impl Default for ServerConfig {
+    // Provides default configuration values for the HTTP server.
     fn default() -> Self {
         Self {
             host: "filebase".into(),

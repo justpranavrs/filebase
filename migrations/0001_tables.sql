@@ -19,8 +19,8 @@ CREATE TABLE IF NOT EXISTS files (
     object_key      TEXT NOT NULL UNIQUE,
     name            TEXT NOT NULL,
     size            INTEGER NOT NULL,
-    content_type    TEXT,
-    checksum        TEXT,
+    content_type    TEXT NOT NULL DEFAULT 'application/octet-stream',
+    checksum        TEXT NOT NULL,
     created_at      TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
 );

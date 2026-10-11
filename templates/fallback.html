@@ -1,0 +1,47 @@
+<!-- Navigation Bar with 404 Breadcrumb -->
+<header class="navbar">
+  <div class="breadcrumbs">
+    <!-- Root Directory Home Link -->
+    <a
+      href="/files"
+      hx-get="/files"
+      hx-target="#app"
+      hx-swap="innerHTML"
+      hx-push-url="true"
+      title="Root directory"
+    >
+      <svg class="icon icon-sm" aria-hidden="true">
+        <use href="/static/icons.svg#home"></use>
+      </svg>
+    </a>
+    <svg class="icon icon-sm" aria-hidden="true">
+      <use href="/static/icons.svg#chevron-right"></use>
+    </svg>
+    <span class="current">404</span>
+  </div>
+</header>
+
+<!-- Fallback 404 Error State Display -->
+<section class="workspace">
+  <div class="fallback-box">
+    <div class="fallback-code">404</div>
+    <h2 class="fallback-title">Page not found</h2>
+    <p class="fallback-desc">
+      The folder or file you are looking for does not exist or has been moved.
+    </p>
+    <!-- Return to Root Directory Button -->
+    <a
+      href="/files"
+      class="btn btn-primary"
+      hx-get="/files"
+      hx-target="#app"
+      hx-swap="innerHTML"
+      hx-push-url="true"
+    >
+      <svg class="icon icon-sm" aria-hidden="true">
+        <use href="/static/icons.svg#home"></use>
+      </svg>
+      <span>Back to All Files</span>
+    </a>
+  </div>
+</section>

@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n                SELECT * FROM folders\n                WHERE parent_id IS ?\n            ",
+  "query": "\n                SELECT \n                    id, parent_id, name, created_at, updated_at \n                FROM folders\n                WHERE id IS ?\n            ",
   "describe": {
     "columns": [
       {
@@ -70,5 +70,5 @@
       false
     ]
   },
-  "hash": "abded89023fd13897474ee1ed5d5a6bb4e865d49cd3e9c6b1b33a1bce478628f"
+  "hash": "97c77844ded499edbab77279db6f6bbe00fbdb68502a5047fd51a6de1474216a"
 }

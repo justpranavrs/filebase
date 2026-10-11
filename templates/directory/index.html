@@ -1,26 +1,199 @@
-<div>
-  <div>
-    <h3>{{ parent.name }}</h3>
-    <form 
-      hx-post="/folders" 
-      hx-target="#folder-workspace" 
-      hx-swap="beforeend" 
-      hx-vals='{"parent_id": "{{ parent.id }}"}'
+<!-- Top Navigation Bar -->
+<header class="navbar">
+  <!-- Breadcrumbs Hierarchy -->
+  <div class="breadcrumbs">
+    <!-- Root Directory Home Icon Link -->
+    <a
+      href="/files"
+      hx-get="/files"
+      hx-target="#app"
+      hx-swap="innerHTML"
+      hx-push-url="true"
+      title="Root directory"
     >
-        <input type="text" name="name" placeholder="New Folder" required />
-        <button type="submit">Create Folder</button>
-    </form>
+      <svg class="icon icon-sm" aria-hidden="true">
+        <use href="/static/icons.svg#home"></use>
+      </svg>
+    </a>
+
+    <!-- Non-Root Ancestor Modal Trigger -->
+    {% if parent.id != 1 %}
+      <svg class="icon icon-sm" aria-hidden="true">
+        <use href="/static/icons.svg#chevron-right"></use>
+      </svg>
+      <button
+        type="button"
+        class="breadcrumb-btn"
+        onclick="document.getElementById('ancestors-dialog').showModal()"
+        title="Show ancestor folders"
+      >
+        ..
+      </button>
+    {% endif %}
+
+    <!-- Current Directory Label -->
+    <svg class="icon icon-sm" aria-hidden="true">
+      <use href="/static/icons.svg#chevron-right"></use>
+    </svg>
+    <span class="current">{{ parent.name }}</span>
   </div>
-  <ul id="folder-workspace">
-    {% for folder in items.folders %} 
-      {% include "folder_item.html" %} 
-    {% endfor %} 
-    
-    {% for file in items.files %}
-      <li>
-        <span>{{ file.name }}</span>
-        <a href="/files/{{ file.object_key }}/download">Download</a>
-      </li>
-    {% endfor %}
-  </ul>
-</div>
+
+  <!-- Client-side Search and Filter -->
+  <search class="navbar-actions">
+    <input
+      type="search"
+      id="search-filter"
+      class="search-input"
+      placeholder="Filter files & folders..."
+      oninput="filterItems(this.value)"
+      autocomplete="off"
+      spellcheck="false"
+    />
+  </search>
+</header>
+
+<!-- Main Workspace Section -->
+<section class="workspace">
+  <!-- Workspace Action Header -->
+  <div class="workspace-bar">
+    <!-- Folder Title with Metadata Popover -->
+    <div class="workspace-title-wrapper">
+      <h2 class="workspace-title">{{ parent.name }}</h2>
+      <div class="folder-popover">
+        <div class="popover-header">
+          <div class="icon-box icon-folder">
+            <svg class="icon icon-sm" aria-hidden="true">
+              <use href="/static/icons.svg#folder"></use>
+            </svg>
+          </div>
+          <span class="popover-title">{{ parent.name }}</span>
+        </div>
+        <div class="popover-body">
+          <div class="popover-row">
+            <span class="popover-label">Created</span>
+            <span class="popover-value">{{ parent.created_at }}</span>
+          </div>
+          <div class="popover-row">
+            <span class="popover-label">Updated</span>
+            <span class="popover-value">{{ parent.updated_at }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions: Create Subfolder & Upload File Forms -->
+    <div class="workspace-actions">
+      <!-- Create Subfolder Form -->
+      <form
+        class="folder-form"
+        hx-post="/files/folder"
+        hx-target="#folder-workspace"
+        hx-swap="beforeend"
+      >
+        <input type="hidden" name="parent_id" value="{{ parent.id }}" />
+        <input
+          type="text"
+          name="name"
+          placeholder="New folder name..."
+          required
+          autocomplete="off"
+        />
+        <button type="submit" class="btn btn-secondary">
+          <svg class="icon icon-sm" aria-hidden="true">
+            <use href="/static/icons.svg#plus"></use>
+          </svg>
+          <span>Create Folder</span>
+        </button>
+      </form>
+
+      <!-- Upload File Form -->
+      <form
+        class="upload-form"
+        hx-post="/files/upload"
+        hx-trigger="change"
+        hx-target="#file-workspace"
+        hx-swap="beforeend"
+        hx-encoding="multipart/form-data"
+      >
+        <input type="hidden" name="folder_id" value="{{ parent.id }}" />
+        <label class="btn btn-primary upload-btn" title="Upload files">
+          <svg class="icon icon-sm" aria-hidden="true">
+            <use href="/static/icons.svg#upload"></use>
+          </svg>
+          <span>Upload</span>
+          <input
+            type="file"
+            name="file"
+            multiple
+            class="upload-input"
+          />
+        </label>
+      </form>
+    </div>
+  </div>
+
+  <!-- Items Grid (Folders and Files) -->
+  <div class="grid">
+    <!-- Subfolders Workspace Container -->
+    <div id="folder-workspace" class="grid-sub">
+      {% for folder in folders %}
+        {{ folder|safe }}
+      {% endfor %}
+    </div>
+
+    <!-- Files Workspace Container -->
+    <div id="file-workspace" class="grid-sub">
+      {% for file in files %}
+        {{ file|safe }}
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Empty State Placeholder -->
+  <div class="empty-box">No files or folders found</div>
+</section>
+
+<!-- Move Navigator Modal -->
+<dialog id="move-dialog" class="modal"></dialog>
+
+<!-- Ancestors Navigation Modal -->
+<dialog id="ancestors-dialog" class="modal">
+  {% if parent.id != 1 %}
+    <!-- Ancestors Modal Backdrop -->
+    <form method="dialog" class="modal-backdrop">
+      <button type="submit" aria-label="Close"></button>
+    </form>
+
+    <!-- Ancestors Dialog Window -->
+    <div class="modal-content move-modal-content">
+      <!-- Modal Body: Ordered Ancestor Folders (Root First) -->
+      <div class="modal-body">
+        <div class="move-folder-list">
+          {% for ancestor in ancestors %}
+            <a
+              href="/files/folder/{{ ancestor.id }}"
+              class="move-folder-row"
+              hx-get="/files/folder/{{ ancestor.id }}"
+              hx-target="#app"
+              hx-swap="innerHTML"
+              hx-push-url="true"
+              onclick="document.getElementById('ancestors-dialog').close()"
+            >
+              <div class="move-folder-row-left">
+                <div class="icon-box icon-folder">
+                  <svg class="icon icon-sm" aria-hidden="true">
+                    <use href="/static/icons.svg#folder"></use>
+                  </svg>
+                </div>
+                <span class="move-folder-name">{{ ancestor.name }}</span>
+              </div>
+              <svg class="icon icon-sm move-row-arrow" aria-hidden="true">
+                <use href="/static/icons.svg#chevron-right"></use>
+              </svg>
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</dialog>
