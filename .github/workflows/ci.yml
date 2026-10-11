@@ -6,8 +6,26 @@ name: CI
 on:
   push:
     branches: [main]
+    paths:
+      - "src/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "templates/**"
+      - "migrations/**"
+      - ".sqlx/**"
+      - "askama.toml"
+      - "sqlx.toml"
   pull_request:
     branches: [main]
+    paths:
+      - "src/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "templates/**"
+      - "migrations/**"
+      - ".sqlx/**"
+      - "askama.toml"
+      - "sqlx.toml"
 
 env:
   CARGO_TERM_COLOR: always

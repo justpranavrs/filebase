@@ -19,6 +19,7 @@ Filebase is a self-hosted document management system built for storing personal 
 - [Getting Started](#getting-started)
 - [Configuration](#configuration)
 - [Database Migrations](#database-migrations)
+- [CI/CD](#cicd)
 - [License](#license)
 
 ---
@@ -78,7 +79,23 @@ HTML templates compile directly into native Rust code with Askama at build time,
 
 ## Getting Started
 
-### Docker
+### Quick Start
+
+Run Filebase immediately using the official pre-built Docker image:
+
+```bash
+docker run -d \
+  --name filebase \
+  -p 3000:3000 \
+  -v ./data:/var/lib/filebase/data \
+  -v ./storage:/var/lib/filebase/storage \
+  --restart unless-stopped \
+  justpranavrs/filebase:latest
+```
+
+Open `http://localhost:3000` in your browser. Database migrations run automatically on startup.
+
+### Docker Compose
 
 1. Clone and configure:
 
@@ -193,6 +210,19 @@ Docker builds with `SQLX_OFFLINE=true`. If you modify queries or schema definiti
 cargo sqlx prepare
 # or: make sqlx-prepare
 ```
+
+---
+
+## CI/CD
+
+If you fork this repository to build and release your own container images via GitHub Actions (`.github/workflows/release.yml`), configure the following credentials under **Settings → Secrets and variables → Actions**:
+
+| Name | Type | Description |
+| :--- | :--- | :--- |
+| `DOCKERHUB_USERNAME` | **Repository Variable** | Your Docker Hub account or organization username |
+| `DOCKERHUB_TOKEN` | **Repository Secret** | Docker Hub Personal Access Token (PAT) with Read & Write permissions |
+
+Without these credentials, the `Build, Scan, and Push` release workflow will fail to authenticate with Docker Hub when `v*` tags are pushed.
 
 ---
 
