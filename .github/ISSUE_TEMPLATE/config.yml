@@ -3,6 +3,3 @@ contact_links:
   - name: Ask a Question
     url: https://github.com/justpranavrs/filebase/discussions
     about: Ask questions or get help with self-hosting Filebase.
-  - name: Report a Security Vulnerability
-    url: https://github.com/justpranavrs/filebase/security/advisories/new
-    about: Privately report a security vulnerability per our security policy.
