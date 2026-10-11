@@ -179,7 +179,7 @@ pub async fn upload_file(
             let content_type = field.content_type().map(ToString::to_string);
             let data = field.bytes().await?;
             let checksum = checksum(&data);
-            let object_key = storage_svc.save_file(&data).await?;
+            let object_key = Uuid::now_v7();
 
             let new_file = NewFile {
                 folder_id: target_folder_id,
@@ -189,7 +189,10 @@ pub async fn upload_file(
                 content_type,
                 checksum,
             };
-            file = Some(svc.create_file(new_file).await?);
+            svc.create_file(new_file).await?;
+            storage_svc.save_file(&object_key, &data).await?;
+            let uploaded_file = svc.mark_uploaded(object_key).await?;
+            file = Some(uploaded_file);
         };
     }
 

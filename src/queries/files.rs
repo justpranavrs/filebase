@@ -24,8 +24,8 @@ impl FileDB {
         sqlx::query_as!(
             File,
             r#"
-                INSERT INTO files (folder_id, object_key, name, size, content_type, checksum)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO files (folder_id, object_key, name, size, content_type, checksum, is_uploaded)
+                VALUES (?, ?, ?, ?, ?, ?, 0)
                 RETURNING
                     id AS "id!", folder_id, object_key, name,
                     size, content_type, checksum,
@@ -42,6 +42,28 @@ impl FileDB {
         .await
     }
 
+    // Marks a file as successfully uploaded by its unique storage object key.
+    #[instrument(skip(self), err)]
+    pub async fn mark_uploaded(&self, object_key: Uuid) -> sqlx::Result<Option<File>> {
+        sqlx::query_as!(
+            File,
+            r#"
+                UPDATE files
+                SET
+                    is_uploaded = 1,
+                    updated_at = datetime('now')
+                WHERE object_key IS ?
+                RETURNING
+                    id AS "id!", folder_id, object_key, name,
+                    size, content_type, checksum,
+                    created_at, updated_at
+            "#,
+            object_key
+        )
+        .fetch_optional(&self.pool)
+        .await
+    }
+
     // Retrieves a file record by its unique storage object key.
     #[instrument(skip(self), err)]
     pub async fn file_by_key(&self, object_key: Uuid) -> sqlx::Result<Option<File>> {
@@ -53,7 +75,7 @@ impl FileDB {
                     size, content_type, checksum,
                     created_at, updated_at
                 FROM files 
-                WHERE object_key is ?
+                WHERE object_key is ? AND is_uploaded = 1
             "#,
             object_key
         )
@@ -72,7 +94,7 @@ impl FileDB {
                     size, content_type, checksum,
                     created_at, updated_at
                 FROM files 
-                WHERE folder_id IS ?
+                WHERE folder_id IS ? AND is_uploaded = 1
             "#,
             folder_id
         )
@@ -92,7 +114,7 @@ impl FileDB {
                     folder_id = COALESCE(?, folder_id),
                     name = COALESCE(?, name),
                     updated_at = datetime('now')
-                WHERE object_key IS ?
+                WHERE object_key IS ? AND is_uploaded = 1
                 RETURNING
                     id AS "id!", folder_id, object_key, name,
                     size, content_type, checksum,

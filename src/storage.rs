@@ -3,7 +3,7 @@
 
 use std::{fs, io};
 
-use sha1::{Digest, Sha1};
+use sha2::{Digest, Sha256};
 
 use crate::config::StorageConfig;
 
@@ -12,9 +12,9 @@ pub fn init(cfg: &StorageConfig) -> io::Result<()> {
     fs::create_dir_all(&cfg.dir)
 }
 
-// Computes the SHA-1 checksum of the given byte slice as a lowercase hexadecimal string.
+// Computes the SHA-256 checksum of the given byte slice as a lowercase hexadecimal string.
 pub fn checksum(data: &[u8]) -> String {
-    let mut hasher = Sha1::new();
+    let mut hasher = Sha256::new();
     hasher.update(data);
     hasher
         .finalize()

@@ -37,7 +37,7 @@ The web interface is server-rendered using Askama templates and HTMX, providing 
 
 ## Core Architecture
 
-Filebase runs as a high-performance Rust web application paired with an automated backup worker, backed by SQLite and local disk storage:
+Filebase runs as a Rust web application paired with an automated backup worker, backed by SQLite and local disk storage:
 
 - **Axum**: Application server handling file operations, folder navigation, static asset delivery, and template rendering.
 - **SQLite**: Embedded database storing folder structures, document metadata, and SHA-256 checksums in WAL mode.

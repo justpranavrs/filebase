@@ -30,15 +30,14 @@ impl StorageService {
         fs::read(&path).await.map_err(Into::into)
     }
 
-    // Writes binary data to disk under a newly generated UUID object key.
-    pub async fn save_file(&self, data: &[u8]) -> Result<Uuid, Error> {
-        let key = uuid::Uuid::now_v7();
-        let path = self.resolve_path(&key);
+    // Writes binary data to disk under the specified storage object key.
+    pub async fn save_file(&self, key: &Uuid, data: &[u8]) -> Result<(), Error> {
+        let path = self.resolve_path(key);
 
         let mut file = fs::File::create(&path).await?;
         file.write_all(data).await?;
         file.flush().await?;
-        Ok(key)
+        Ok(())
     }
 
     // Deletes the file from disk using its storage object key.

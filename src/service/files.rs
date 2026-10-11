@@ -39,6 +39,15 @@ impl FileService {
         Ok(self.file_db.create_file(file).await?)
     }
 
+    // Marks a file as successfully uploaded via the database repository.
+    #[instrument(skip(self))]
+    pub async fn mark_uploaded(&self, key: Uuid) -> Result<File, Error> {
+        self.file_db
+            .mark_uploaded(key)
+            .await?
+            .ok_or(Error::NotFound)
+    }
+
     // Persists a new folder record via the database repository.
     #[instrument(skip(self))]
     pub async fn create_folder(&self, folder: NewFolder) -> Result<Folder, Error> {

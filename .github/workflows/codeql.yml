@@ -6,8 +6,30 @@ name: "CodeQL"
 on:
   push:
     branches: ["main"]
+    paths:
+      - "src/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "templates/**"
+      - "static/**"
+      - "migrations/**"
+      - ".sqlx/**"
+      - "askama.toml"
+      - "sqlx.toml"
+      - ".github/workflows/**"
   pull_request:
     branches: ["main"]
+    paths:
+      - "src/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "templates/**"
+      - "static/**"
+      - "migrations/**"
+      - ".sqlx/**"
+      - "askama.toml"
+      - "sqlx.toml"
+      - ".github/workflows/**"
   schedule:
     - cron: "30 11 * * 5"
 

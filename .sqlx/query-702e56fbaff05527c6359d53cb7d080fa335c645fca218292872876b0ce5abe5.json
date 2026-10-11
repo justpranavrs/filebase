@@ -1,10 +1,10 @@
 {
   "db_name": "SQLite",
-  "query": "\n                SELECT \n                    id, folder_id, object_key, name,\n                    size, content_type, checksum,\n                    created_at, updated_at\n                FROM files \n                WHERE folder_id IS ?\n            ",
+  "query": "\n                UPDATE files\n                SET\n                    folder_id = COALESCE(?, folder_id),\n                    name = COALESCE(?, name),\n                    updated_at = datetime('now')\n                WHERE object_key IS ? AND is_uploaded = 1\n                RETURNING\n                    id AS \"id!\", folder_id, object_key, name,\n                    size, content_type, checksum, is_uploaded,\n                    created_at, updated_at\n            ",
   "describe": {
     "columns": [
       {
-        "name": "id",
+        "name": "id!",
         "ordinal": 0,
         "type_info": "Integer",
         "origin": {
@@ -81,8 +81,19 @@
         }
       },
       {
-        "name": "created_at",
+        "name": "is_uploaded",
         "ordinal": 7,
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "files",
+            "name": "is_uploaded"
+          }
+        }
+      },
+      {
+        "name": "created_at",
+        "ordinal": 8,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -93,7 +104,7 @@
       },
       {
         "name": "updated_at",
-        "ordinal": 8,
+        "ordinal": 9,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -104,9 +115,10 @@
       }
     ],
     "parameters": {
-      "Right": 1
+      "Right": 3
     },
     "nullable": [
+      null,
       false,
       false,
       false,
@@ -118,5 +130,5 @@
       false
     ]
   },
-  "hash": "f25b9824df7123379e1d0a4e77e42bd0fed440aff23bb421dbe836aa5d97888a"
+  "hash": "702e56fbaff05527c6359d53cb7d080fa335c645fca218292872876b0ce5abe5"
 }

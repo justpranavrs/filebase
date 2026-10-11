@@ -21,7 +21,9 @@ pub async fn init(cfg: &DatabaseConfig) -> Result<SqlitePool, sqlx::Error> {
         .busy_timeout(Duration::from_secs(cfg.timeout_seconds));
 
     // Create the database directory if it does not exist.
-    if let Some(dir) = opts.get_filename().parent() {
+    if let Some(dir) = opts.get_filename().parent()
+        && !dir.as_os_str().is_empty()
+    {
         fs::create_dir_all(dir)?;
     }
 

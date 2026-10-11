@@ -526,7 +526,7 @@ dependencies = [
  "dotenvy",
  "envy",
  "serde",
- "sha1",
+ "sha2 0.11.0",
  "sqlx",
  "tokio",
  "tokio-util",

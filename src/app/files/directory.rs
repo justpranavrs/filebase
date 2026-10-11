@@ -5,7 +5,7 @@ use askama::Template;
 use axum::{
     extract::{Path, State},
     http::HeaderMap,
-    response::Html,
+    response::Response,
 };
 
 use crate::{
@@ -46,10 +46,7 @@ impl From<Directory> for DirectoryTemplate {
 }
 
 // Request handler to render the root directory view using the default root folder ID.
-pub async fn root(
-    State(svc): State<FileService>,
-    headers: HeaderMap,
-) -> Result<Html<String>, Error> {
+pub async fn root(State(svc): State<FileService>, headers: HeaderMap) -> Result<Response, Error> {
     let fragment = DirectoryTemplate::from(svc.folder_items(ROOT_FOLDER_ID).await?).render()?;
     render(headers, fragment)
 }
@@ -59,7 +56,7 @@ pub async fn directory(
     State(svc): State<FileService>,
     Path(folder_id): Path<i64>,
     headers: HeaderMap,
-) -> Result<Html<String>, Error> {
+) -> Result<Response, Error> {
     let fragment = DirectoryTemplate::from(svc.folder_items(folder_id).await?).render()?;
     render(headers, fragment)
 }

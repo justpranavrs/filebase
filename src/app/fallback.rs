@@ -4,7 +4,7 @@
 use askama::Template;
 use axum::{
     http::{HeaderMap, StatusCode},
-    response::Html,
+    response::Response,
 };
 
 use crate::app::{Error, render};
@@ -15,7 +15,7 @@ use crate::app::{Error, render};
 struct FallbackTemplate {}
 
 // Request handler to handle fallback 404 pages.
-pub async fn fallback(headers: HeaderMap) -> Result<(StatusCode, Html<String>), Error> {
+pub async fn fallback(headers: HeaderMap) -> Result<(StatusCode, Response), Error> {
     let page = render(headers, FallbackTemplate {}.render()?)?;
     Ok((StatusCode::NOT_FOUND, page))
 }
