@@ -1,10 +1,10 @@
 {
   "db_name": "SQLite",
-  "query": "\n                SELECT \n                    id, folder_id, object_key, name,\n                    size, content_type, checksum, is_uploaded,\n                    created_at, updated_at\n                FROM files \n                WHERE folder_id IS ? AND is_uploaded = 1\n            ",
+  "query": "\n                DELETE FROM files\n                WHERE object_key = ?\n                RETURNING\n                    id AS \"id!\", folder_id, object_key, name,\n                    size, content_type, checksum,\n                    created_at, updated_at\n            ",
   "describe": {
     "columns": [
       {
-        "name": "id",
+        "name": "id!",
         "ordinal": 0,
         "type_info": "Integer",
         "origin": {
@@ -81,19 +81,8 @@
         }
       },
       {
-        "name": "is_uploaded",
-        "ordinal": 7,
-        "type_info": "Bool",
-        "origin": {
-          "Table": {
-            "table": "files",
-            "name": "is_uploaded"
-          }
-        }
-      },
-      {
         "name": "created_at",
-        "ordinal": 8,
+        "ordinal": 7,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -104,7 +93,7 @@
       },
       {
         "name": "updated_at",
-        "ordinal": 9,
+        "ordinal": 8,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -126,9 +115,8 @@
       false,
       false,
       false,
-      false,
       false
     ]
   },
-  "hash": "101f2351b88624c5d9ea682c940d7d3bd0d37435caf491e96802222517341bcc"
+  "hash": "d064185918ecd66ac00ea4b569ed417af492dfc618de9e28c9b4b61c1cb80c63"
 }

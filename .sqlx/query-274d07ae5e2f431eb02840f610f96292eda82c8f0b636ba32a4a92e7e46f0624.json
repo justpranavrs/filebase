@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n                SELECT\n                    id, folder_id, object_key, name,\n                    size, content_type, checksum, is_uploaded,\n                    created_at, updated_at\n                FROM files \n                WHERE object_key is ? AND is_uploaded = 1\n            ",
+  "query": "\n                SELECT\n                    id, folder_id, object_key, name,\n                    size, content_type, checksum,\n                    created_at, updated_at\n                FROM files \n                WHERE object_key is ? AND is_uploaded = 1\n            ",
   "describe": {
     "columns": [
       {
@@ -81,19 +81,8 @@
         }
       },
       {
-        "name": "is_uploaded",
-        "ordinal": 7,
-        "type_info": "Bool",
-        "origin": {
-          "Table": {
-            "table": "files",
-            "name": "is_uploaded"
-          }
-        }
-      },
-      {
         "name": "created_at",
-        "ordinal": 8,
+        "ordinal": 7,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -104,7 +93,7 @@
       },
       {
         "name": "updated_at",
-        "ordinal": 9,
+        "ordinal": 8,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -126,9 +115,8 @@
       false,
       false,
       false,
-      false,
       false
     ]
   },
-  "hash": "72692c5a03d0e4f19e8d785863551b3fc5f25f67987e3ac7ba85977f15306fa3"
+  "hash": "274d07ae5e2f431eb02840f610f96292eda82c8f0b636ba32a4a92e7e46f0624"
 }
