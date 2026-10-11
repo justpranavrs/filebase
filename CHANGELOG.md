@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Planned
+- Streaming file uploads and downloads using `tokio::fs` and `ReaderStream`.
+- ZIP folder downloads with on-the-fly streaming archive generation.
+- Recursive folder uploads preserving directory hierarchies.
+- Soft deletes and trash bin with recovery window.
+- Multi-field sorting by name, date modified, and size.
+- Storage quota and disk usage breakdown widget.
+- Temporary public share links with configurable expiration and access limits.
+- Document expiry tracking with automated alert notifications via WhatsApp and Telegram.
+
 ## [v0.1.0-alpha] - 2026-10-11
 Link : [Github Release](https://github.com/justpranavrs/filebase/releases/tag/v0.1.0-alpha)
 
@@ -20,4 +32,5 @@ Link : [Github Release](https://github.com/justpranavrs/filebase/releases/tag/v0
 - GitHub Actions CI/CD workflows for tests, linting, formatting, and Docker Hub image publishing with SBOM and SLSA provenance attestations.
 
 ##
+* [Unreleased]: https://github.com/justpranavrs/filebase/compare/v0.1.0-alpha...HEAD
 * [0.1.0-alpha] : [Initial Release](https://github.com/justpranavrs/filebase/commit/cdd7082a7783546426d327cf9c0e554d1899cc18)

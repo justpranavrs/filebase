@@ -9,6 +9,14 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    groups:
+      cargo-dependencies:
+        patterns:
+          - "*"
 
   # Maintain GitHub Actions workflows in .github/workflows
   - package-ecosystem: "github-actions"
@@ -16,3 +24,11 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
