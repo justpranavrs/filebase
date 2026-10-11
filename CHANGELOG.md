@@ -7,7 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Publishing container images to GitHub Container Registry (`ghcr.io`) alongside Docker Hub.
+- Automated security analysis with CodeQL Advanced and Dependabot dependency management.
+
+### Security
+- Hardened CI/CD supply chain by pinning GitHub Actions to immutable commit SHAs and enforcing least-privilege workflow permissions.
+
 ### Planned
+- Stale directory view renders and back/forward browser navigation desync via `Cache-Control` headers and HTMX cache settings.
 - Streaming file uploads and downloads using `tokio::fs` and `ReaderStream`.
 - ZIP folder downloads with on-the-fly streaming archive generation.
 - Recursive folder uploads preserving directory hierarchies.

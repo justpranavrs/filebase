@@ -1,5 +1,10 @@
 # filebase
 
+[![CI](https://github.com/justpranavrs/filebase/actions/workflows/ci.yml/badge.svg)](https://github.com/justpranavrs/filebase/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/justpranavrs/filebase/actions/workflows/codeql.yml/badge.svg)](https://github.com/justpranavrs/filebase/actions/workflows/codeql.yml)
+[![Release Docker Image](https://github.com/justpranavrs/filebase/actions/workflows/release.yml/badge.svg)](https://github.com/justpranavrs/filebase/actions/workflows/release.yml)
+[![Dependabot Updates](https://github.com/justpranavrs/filebase/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/justpranavrs/filebase/actions/workflows/dependabot/dependabot-updates)
+
 An open-source, self-hosted document management system for personal files and records.
 
 ---

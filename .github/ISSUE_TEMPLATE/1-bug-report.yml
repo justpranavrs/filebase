@@ -1,0 +1,108 @@
+name: Bug Report
+description: File a bug report to help improve Filebase
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this issue! Please search existing issues to ensure this bug has not already been reported.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear and concise description of what the bug is.
+      placeholder: Describe what happened.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: A clear and concise description of what you expected to happen instead.
+      placeholder: Describe what you expected to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction Steps
+      description: Steps or code needed to reproduce the issue.
+      placeholder: |
+        1. Start Filebase via `docker run` or `cargo run`
+        2. Navigate to `/files`
+        3. Attempt to upload a document or move a folder
+        4. See error
+    validations:
+      required: true
+
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: Deployment Method
+      description: How are you running Filebase?
+      options:
+        - Docker Compose
+        - Docker CLI (`docker run`)
+        - Pre-built Binary
+        - Cargo (`cargo run`)
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Filebase Version
+      description: The version or git commit hash of Filebase you are running.
+      placeholder: e.g. v0.1.0-alpha, latest, or git commit hash
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system, architecture and browser.
+      placeholder: e.g. Ubuntu 24.04 (x86_64), Firefox 130
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Logs & Output
+      description: Server logs, browser console output, or backtraces.
+      render: shell
+      placeholder: Paste server logs or terminal output here.
+    validations:
+      required: false
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots or Media
+      description: If applicable, add screenshots or recordings to help explain your problem (drag and drop files directly here).
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Add any other context or observations about the problem here.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Pre-Submission Checklist
+      options:
+        - label: I have searched existing issues to ensure this is not a duplicate.
+          required: true
+        - label: I have verified that this issue occurs on the latest release or main branch.
+          required: false

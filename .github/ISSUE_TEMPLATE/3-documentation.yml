@@ -1,0 +1,36 @@
+name: Documentation
+description: Propose an improvement or report an issue with Filebase documentation
+title: "[Docs]: "
+labels: ["documentation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve the Filebase documentation!
+
+  - type: input
+    id: location
+    attributes:
+      label: Documentation Location
+      description: Which file, guide, or section needs improvement?
+      placeholder: e.g. README.md, docker/README.md, backup/README.md, or Configuration guide
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description of Issue or Improvement
+      description: What is unclear, incorrect, missing, or needs updating?
+      placeholder: Describe the missing or outdated information.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-changes
+    attributes:
+      label: Proposed Changes
+      description: How should the documentation be updated?
+      placeholder: Suggested replacement text or additions.
+    validations:
+      required: false

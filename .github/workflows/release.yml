@@ -6,9 +6,11 @@ name: Release Docker Image
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
 
 permissions:
   contents: read
+  packages: write
   security-events: write
 
 jobs:
@@ -18,28 +20,37 @@ jobs:
 
     steps:
       - name: Check Out Repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set Up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Log In to Docker Hub
-        uses: docker/login-action@v4
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Log In to GitHub Container Registry
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Generate Image Tags and Labels
         id: meta
-        uses: docker/metadata-action@v6
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
-          images: justpranavrs/filebase
+          images: |
+            justpranavrs/filebase
+            ghcr.io/${{ github.repository }}
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
 
       - name: Build Image for Scanning
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           load: true
@@ -50,13 +61,13 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Docker Scout Overview and Recommendations
-        uses: docker/scout-action@v1
+        uses: docker/scout-action@bacf462e8d090c09660de30a6ccc718035f961e3 # v1
         with:
           command: quickview,recommendations
           image: local://filebase:scan
 
       - name: Docker Scout CVE Report
-        uses: docker/scout-action@v1
+        uses: docker/scout-action@bacf462e8d090c09660de30a6ccc718035f961e3 # v1
         with:
           command: cves
           image: local://filebase:scan
@@ -66,12 +77,12 @@ jobs:
           summary: true
 
       - name: Upload Scan Results to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
         with:
           sarif_file: scout.sarif
 
       - name: Docker Scout Severity Gate
-        uses: docker/scout-action@v1
+        uses: docker/scout-action@bacf462e8d090c09660de30a6ccc718035f961e3 # v1
         with:
           command: cves
           image: local://filebase:scan
@@ -81,7 +92,7 @@ jobs:
           summary: false
 
       - name: Build and Push Image
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           push: true
