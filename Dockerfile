@@ -23,7 +23,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
     cp target/release/filebase .
 
 # The runtime stage which just executes the binary.
-FROM alpine:3.24 AS runtime
+FROM gcr.io/distroless/static-debian13:nonroot AS runtime
 WORKDIR /app
 COPY --from=builder /app/filebase .
 COPY static ./static

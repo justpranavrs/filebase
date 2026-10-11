@@ -10,3 +10,6 @@
 
 # File Storage
 /.storage
+
+# Security Reports
+*.sarif

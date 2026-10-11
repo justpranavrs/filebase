@@ -1,0 +1,93 @@
+# Copyright 2026 Pranav R S.
+# Use of this source code is governed by the MIT license that can be found in the LICENSE file.
+
+name: Release Docker Image
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  release:
+    name: Build, Scan, and Push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check Out Repository
+        uses: actions/checkout@v7
+
+      - name: Set Up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log In to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Generate Image Tags and Labels
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: justpranavrs/filebase
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+      - name: Build Image for Scanning
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          load: true
+          tags: filebase:scan
+          provenance: false
+          sbom: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Docker Scout Overview and Recommendations
+        uses: docker/scout-action@v1
+        with:
+          command: quickview,recommendations
+          image: local://filebase:scan
+
+      - name: Docker Scout CVE Report
+        uses: docker/scout-action@v1
+        with:
+          command: cves
+          image: local://filebase:scan
+          only-severities: critical,high
+          only-fixed: true
+          sarif-file: scout.sarif
+          summary: true
+
+      - name: Upload Scan Results to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: scout.sarif
+
+      - name: Docker Scout Severity Gate
+        uses: docker/scout-action@v1
+        with:
+          command: cves
+          image: local://filebase:scan
+          only-severities: critical,high
+          only-fixed: true
+          exit-code: true
+          summary: false
+
+      - name: Build and Push Image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          provenance: mode=max
+          sbom: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

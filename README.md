@@ -66,6 +66,7 @@ HTML templates compile directly into native Rust code with Askama at build time,
 
 - [Rust](https://www.rust-lang.org)
 - [Docker](https://www.docker.com)
+- [Docker Scout](https://docs.docker.com/scout/install/)
 - [SQLx](https://github.com/launchbadge/sqlx)
 - [Axum](https://github.com/tokio-rs/axum)
 - [Askama](https://github.com/askama-rs/askama)
@@ -106,6 +107,17 @@ HTML templates compile directly into native Rust code with Askama at build time,
 Database migrations run automatically on startup.
 
 > **Note:** Migrations are compiled into the binary. Whenever you add or edit migrations, rebuild the container with `docker compose up --build`.
+
+### Vulnerability Scanning
+
+Filebase uses Docker Scout to scan container images for known vulnerabilities and base image optimizations. After installing [Docker Scout](https://docs.docker.com/scout/install/), run:
+
+```bash
+./docker/scout.sh
+# or: make docker-scout
+```
+
+This runs quickview and recommendations, filters for fixable Critical and High CVEs, and exports a SARIF report to `docker/scout.sarif`.
 
 ### Local Development
 

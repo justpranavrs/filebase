@@ -138,10 +138,7 @@ impl FileService {
     // Deletes a file's metadata record by its storage object key.
     #[instrument(skip(self))]
     pub async fn delete_file(&self, key: Uuid) -> Result<File, Error> {
-        self.file_db
-            .delete_file(key)
-            .await?
-            .ok_or(Error::NotFound)
+        self.file_db.delete_file(key).await?.ok_or(Error::NotFound)
     }
 
     // Updates a folder's metadata record by its primary key ID.
