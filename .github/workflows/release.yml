@@ -48,13 +48,13 @@ jobs:
           cache-to: type=gha,mode=max,scope=scan
 
       - name: Docker Scout Overview and Recommendations
-        uses: docker/scout-action@bacf462e8d090c09660de30a6ccc718035f961e3 # v1
+        uses: docker/scout-action@221e7f4860634eeb1579e3bd7ca232e577bd1864 # v1.26.0
         with:
           command: quickview,recommendations
           image: local://filebase:scan
 
       - name: Docker Scout CVE Report
-        uses: docker/scout-action@bacf462e8d090c09660de30a6ccc718035f961e3 # v1
+        uses: docker/scout-action@221e7f4860634eeb1579e3bd7ca232e577bd1864 # v1.26.0
         with:
           command: cves
           image: local://filebase:scan
@@ -64,12 +64,12 @@ jobs:
           summary: true
 
       - name: Upload Scan Results to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
         with:
           sarif_file: scout.sarif
 
       - name: Docker Scout Severity Gate
-        uses: docker/scout-action@bacf462e8d090c09660de30a6ccc718035f961e3 # v1
+        uses: docker/scout-action@221e7f4860634eeb1579e3bd7ca232e577bd1864 # v1.26.0
         with:
           command: cves
           image: local://filebase:scan
