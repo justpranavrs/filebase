@@ -48,13 +48,13 @@ jobs:
           cache-to: type=gha,mode=max,scope=scan
 
       - name: Docker Scout Overview and Recommendations
-        uses: docker/scout-action@221e7f4860634eeb1579e3bd7ca232e577bd1864 # v1.26.0
+        uses: docker/scout-action@a4119c5a8c5076236a54e4ce99531f7e4dd2ef84 # v1.27.0
         with:
           command: quickview,recommendations
           image: local://filebase:scan
 
       - name: Docker Scout CVE Report
-        uses: docker/scout-action@221e7f4860634eeb1579e3bd7ca232e577bd1864 # v1.26.0
+        uses: docker/scout-action@a4119c5a8c5076236a54e4ce99531f7e4dd2ef84 # v1.27.0
         with:
           command: cves
           image: local://filebase:scan
@@ -64,12 +64,12 @@ jobs:
           summary: true
 
       - name: Upload Scan Results to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
+        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
         with:
           sarif_file: scout.sarif
 
       - name: Docker Scout Severity Gate
-        uses: docker/scout-action@221e7f4860634eeb1579e3bd7ca232e577bd1864 # v1.26.0
+        uses: docker/scout-action@a4119c5a8c5076236a54e4ce99531f7e4dd2ef84 # v1.27.0
         with:
           command: cves
           image: local://filebase:scan
@@ -81,7 +81,7 @@ jobs:
   release:
     name: Build and Push Multi-Architecture Image
     needs: scan
-    uses: docker/github-builder/.github/workflows/build.yml@58cb9f5b71b1836d6f690c1e95effdeb9b98cb8a # v1
+    uses: docker/github-builder/.github/workflows/build.yml@cbc9d42f8c89a55623392aadd03600965b80e963 # v1
     permissions:
       contents: read
       packages: write
